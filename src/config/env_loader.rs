@@ -1,0 +1,50 @@
+use std::error::Error;
+use once_cell::sync::{Lazy, OnceCell};
+
+pub struct EnvLoader {
+    url: String,
+    port: u16,
+    fixer_url: String,
+    fixer_api_key: String,
+}
+
+impl EnvLoader {
+    pub fn from_env() -> Result<Self, Box<dyn Error + Send + Sync>> {
+        dotenvy::dotenv().ok();
+
+        Ok(Self {
+            url: std::env::var("URL")?,
+            port: std::env::var("PORT")?.parse()?,
+            fixer_url: std::env::var("FIXER_URL")?,
+            fixer_api_key: std::env::var("FIXER_API_KEY")?,
+        })
+    }
+
+    pub fn get_url(&self) -> &str { &self.url }
+    pub fn get_port(&self) -> u16 { self.port }
+    pub fn get_fixer_url(&self) -> &str { &self.fixer_url }
+    pub fn get_fixer_api_key(&self) -> &str { &self.fixer_api_key }
+
+    pub fn get_adress(&self) -> String {
+        format!("{}:{}", self.url, self.port)
+    }
+
+    pub fn get_fixer_adress(&self) -> String {
+        format!("{}{}", self.fixer_url, self.fixer_api_key)
+    }
+}
+
+/// Global env loader
+/// Is set once in the main function
+/// If setting it fails the programm will terminate
+pub static LOADER: OnceCell<EnvLoader> = OnceCell::new();
+
+pub fn set_loader() -> std::io::Result<()> {
+    match EnvLoader::from_env() {
+        Ok(env) => { match LOADER.set(env) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "Failed to set env"))
+        }},
+        Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "Failed to load env"))
+    }
+}
