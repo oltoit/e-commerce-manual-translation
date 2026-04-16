@@ -1,5 +1,4 @@
-use diesel::{sql_query, ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
-use diesel::sql_types::BigInt;
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
 use crate::dao::sequence_repository::get_next_val;
 use crate::entity::category::{Category, NewCategory, UpdateCategory};
 use crate::schema::app_category;

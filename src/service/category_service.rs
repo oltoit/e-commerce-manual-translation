@@ -3,6 +3,7 @@ use crate::dao::category_repository::{get_all_categories, get_subcategories};
 use crate::entity::category::Category;
 
 // TODO: authorization -> see how auth error could be passed to controller
+// TODO: manually make every service method a transaction
 pub fn get_categories(connection: &mut PgConnection) -> Result<Vec<Category>, diesel::result::Error> {
     let result = get_all_categories(connection);
 
