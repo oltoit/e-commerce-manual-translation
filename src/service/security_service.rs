@@ -4,9 +4,6 @@ use crate::errors::error_enums::WrongCredentialsOrTokenParsingError;
 use crate::security::jwt_handler::generate_token;
 use crate::security::role::Role;
 
-
-// TODO: checken ob das wirklich funktioniert
-// TODO: jwt token generated does not have the same 
 pub fn authenticate(username: &str, password: &str) -> Result<String, WrongCredentialsOrTokenParsingError> {
     let mut connection = connect();
     let user = match get_by_username(&mut connection, username) {

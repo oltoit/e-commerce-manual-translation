@@ -33,4 +33,8 @@ impl ErrorResponseBody {
     pub fn internal_server_error(path: String) -> Self {
         ErrorResponseBody::new(500, "Internal Server Error".to_string(), "Something went wrong".to_string(), path)
     }
+
+    pub fn not_found(path: String, msg: String) -> Self {
+        ErrorResponseBody::new(404, "Not Found".to_string(), msg, path)
+    }
 }

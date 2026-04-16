@@ -37,6 +37,7 @@ impl TokenClaims {
     pub fn get_expiration(&self) -> u64 { self.exp }
 }
 
+// TODO: source applications token is not compatible with this one -> fix this if there is time for it
 pub fn generate_token(id: i64, user_name: String, role: Role) -> Result<String, TokenGenerationError> {
     // FIXME: remove unwrap
     let secret_key = LOADER.get().unwrap().get_token_secret_key();

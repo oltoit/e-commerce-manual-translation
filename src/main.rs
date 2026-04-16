@@ -3,14 +3,12 @@ use e_commerce_manual_translation::api::controller::{authentication_controller, 
 use e_commerce_manual_translation::config::env_loader::{set_loader, LOADER};
 use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
 
-// TODO: authentication and authorization
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // initiate the EnvLoader with environment variables
     set_loader()?;
 
     // TODO: add configurations
-    // TODO: test if this works
     HttpServer::new(|| {
         App::new()
             .configure(authentication_controller::config)

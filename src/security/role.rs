@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, PartialOrd, PartialEq)]
 pub enum Role {
     #[serde(rename = "USER")]
-    RoleUser,
+    RoleUser = 1,
     #[serde(rename = "ADMIN")]
-    RoleAdmin,
+    RoleAdmin = 2,
 }
 
 impl std::fmt::Display for Role {
@@ -22,5 +22,12 @@ impl Role {
             "ADMIN" => Some(Role::RoleAdmin),
             _ => None,
         }
+    }
+
+    pub fn has_user_permission(&self) -> bool {
+        self >= &Role::RoleUser
+    }
+    pub fn has_admin_permission(&self) -> bool {
+        self >= &Role::RoleAdmin
     }
 }
