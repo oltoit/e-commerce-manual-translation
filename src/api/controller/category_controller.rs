@@ -1,17 +1,23 @@
-use actix_web::{get, options, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, options, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
+use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
 use crate::dao::connect::connect;
-use crate::errors::error_response_body::ErrorResponseBody;
 use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_service;
-use crate::service::security_service::authenticate;
+
+// TODO: get the paths for responses out of the function definition
+// TODO: validator doesn't seem to work correctly yet -> created empty name
+// TODO: -> see how name==null works -> behaviour not explicit right now
 
 // TODO: register all routes from controller here
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(options_categories);
     cfg.service(get_categories);
     cfg.service(get_category);
+    cfg.service(create_category);
+    cfg.service(update_category);
+    cfg.service(delete_category);
 }
 
 #[options("/categories")]
@@ -21,43 +27,83 @@ async fn options_categories() -> impl Responder {
 
 #[get("/categories")]
 async fn get_categories(req: HttpRequest) -> impl Responder {
+    let extensions = req.extensions();
     // TODO: remove unwrap
-    // FIXME: add auth check to every service function
-    let auth_user = req.extensions().get::<AuthUser>().unwrap();
+    let auth_user = extensions.get::<AuthUser>().unwrap();
     let mut connection = connect();
 
     let result = match category_service::get_categories(&mut connection, auth_user) {
-        Some(categories) => categories,
-        None => return HttpResponse::InternalServerError().body(internal_server_error("/categories".to_string()))
+        Ok(categories) => categories,
+        Err(e) => return e.get_response("/categories".to_string())
     };
 
     let resources = result.iter().map(|r| CategoryResource::from_entity(&mut connection, r)).collect::<Vec<CategoryResource>>();
-    // TODO: remove unwrap
-    HttpResponse::Ok().body(serde_json::to_string(&resources).unwrap())
+    HttpResponse::Ok().json(&resources)
 }
 
 #[get("/categories/{id}")]
-async fn get_category(path: web::Path<i64>) -> impl Responder {
-    let mut connection = connect();
+async fn get_category(path: web::Path<i64>, req: HttpRequest) -> impl Responder {
     let id = path.into_inner();
+    let extensions = req.extensions();
+    // TODO: remove unwrap
+    let auth_user = extensions.get::<AuthUser>().unwrap();
+    let mut connection = connect();
 
-    let result = match category_service::get_category_by_id(&mut connection, id) {
-        Some(category) => category,
-        None => return HttpResponse::NotFound().body(not_found(format!("/categories/{}", id)))
+    let result = match category_service::get_category_by_id(&mut connection, auth_user, id) {
+        Ok(category) => category,
+        Err(e) => return e.get_response(format!("/categories/{}", id))
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
-    // TODO: remove unwrap
-    HttpResponse::Ok().body(serde_json::to_string(&resource).unwrap())
+    HttpResponse::Ok().json(&resource)
 }
 
-
-
-fn internal_server_error(path: String) -> String {
+#[post("/categories")]
+async fn create_category(req: HttpRequest, new_category: web::Json<CreateCategoryDto>) -> impl Responder {
+    let extensions = req.extensions();
     // TODO: remove unwrap
-    serde_json::to_string(&ErrorResponseBody::internal_server_error(path)).unwrap()
+    let auth_user = extensions.get::<AuthUser>().unwrap();
+    let mut connection = connect();
+
+    let result = match category_service::create_category(&mut connection, auth_user, new_category.into_inner()) {
+        Ok(category) => category,
+        Err(e) => return e.get_response("/categories".to_string())
+    };
+
+    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    HttpResponse::Created().json(&resource)
 }
-fn not_found(path: String) -> String {
+
+#[put("/categories/{id}")]
+async fn update_category(req: HttpRequest, path: web::Path<i64>, new_category: web::Json<UpdateCategoryDto>) -> impl Responder {
+    let extensions = req.extensions();
     // TODO: remove unwrap
-    serde_json::to_string(&ErrorResponseBody::not_found(path, "category not found".to_string())).unwrap()
+    let auth_user = extensions.get::<AuthUser>().unwrap();
+    let id = path.into_inner();
+    let new_category = new_category.into_inner();
+    let mut connection = connect();
+
+    let result = match category_service::update_category(&mut connection, auth_user, id, new_category) {
+        Ok(category) => category,
+        Err(e) => return e.get_response(format!("/categories/{}", id))
+    };
+
+    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    HttpResponse::Ok().json(&resource)
+}
+
+#[delete("/categories/{id}")]
+async fn delete_category(req: HttpRequest, path: web::Path<i64>) -> impl Responder {
+    let extensions = req.extensions();
+    // TODO: remove unwrap
+    let auth_user = extensions.get::<AuthUser>().unwrap();
+    let id = path.into_inner();
+    let mut connection = connect();
+
+    match category_service::delete_category(&mut connection, auth_user, id) {
+        Ok(_) => (),
+        Err(e) => return e.get_response(format!("/categories/{}", id))
+    };
+
+    HttpResponse::NoContent().finish()
 }

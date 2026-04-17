@@ -30,8 +30,8 @@ impl ErrorResponseBody {
         ErrorResponseBody::new(403, "Forbidden".to_string(), "Access Denied".to_string(), path)
     }
 
-    pub fn internal_server_error(path: String) -> Self {
-        ErrorResponseBody::new(500, "Internal Server Error".to_string(), "Something went wrong".to_string(), path)
+    pub fn internal_server_error(path: String, msg: String) -> Self {
+        ErrorResponseBody::new(500, "Internal Server Error".to_string(), msg, path)
     }
 
     pub fn not_found(path: String, msg: String) -> Self {
