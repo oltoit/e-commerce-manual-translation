@@ -1,0 +1,79 @@
+use actix_web::HttpResponse;
+use crate::errors::error_response_body::ErrorResponseBody;
+
+// TODO: probably refactor all of there errors into their own errors that implement actix::ResponseError
+
+pub enum ErrorsEnum {
+    WrongCredentials,
+    TokenParsing(String),
+    TokenGenerationError(String),
+    NotFound(String),
+    Forbidden,
+    CreationError(String),
+    UpdateError(String),
+    DeletionError(String),
+    DieselError(String),
+    DTONotValid(String),
+    JsonParsingError(String)
+}
+
+impl From<diesel::result::Error> for ErrorsEnum {
+    fn from(e: diesel::result::Error) -> Self {
+        ErrorsEnum::DieselError(e.to_string())
+    }
+}
+
+pub const TOKEN_PARSING_ERROR_MSG: &'static str = "error parsing the token";
+pub const TOKEN_GENERATION_ERROR_MSG: &'static str = "error generating the token";
+pub const DTO_NOT_VALID_ERROR_MSG: &'static str = "DTO was not valid";
+
+impl ErrorsEnum {
+    pub fn get_response(&self, path: &str) -> HttpResponse {
+        match self {
+            ErrorsEnum::WrongCredentials =>
+                HttpResponse::Forbidden().json(
+                    ErrorResponseBody::forbidden(path)
+                ),
+            ErrorsEnum::TokenParsing(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::TokenGenerationError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::NotFound(msg) =>
+                HttpResponse::NotFound().json(
+                    ErrorResponseBody::not_found(path, msg)
+                ),
+            ErrorsEnum::Forbidden =>
+                HttpResponse::Unauthorized().json(
+                    ErrorResponseBody::forbidden(path)
+                ),
+            ErrorsEnum::CreationError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::UpdateError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::DeletionError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::DieselError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::DTONotValid(msg) =>
+                HttpResponse::BadRequest().json(
+                    ErrorResponseBody::bad_request(path, msg)
+                ),
+            ErrorsEnum::JsonParsingError(msg) =>
+                HttpResponse::BadRequest().json(
+                    ErrorResponseBody::bad_request(path, msg)
+                ),
+        }
+    }
+}

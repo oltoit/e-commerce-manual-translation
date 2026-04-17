@@ -1,17 +1,21 @@
 use diesel::PgConnection;
+use validator::Validate;
+use crate::api::dto::auth_dto::LoginRequest;
 use crate::dao::user_repository;
-use crate::errors::error_enums::{ErrorsEnum};
+use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG};
 use crate::security::jwt_handler::generate_token;
 use crate::security::role::Role;
 
-pub fn authenticate(connection: &mut PgConnection, username: &str, password: &str) -> Result<String, ErrorsEnum> {
-    let user = match user_repository::get_by_username(connection, username) {
+pub fn authenticate(connection: &mut PgConnection, login_request: LoginRequest) -> Result<String, ErrorsEnum> {
+    if login_request.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
+
+    let user = match user_repository::get_by_username(connection, &login_request.username) {
         Ok(user) => user,
         Err(_) => return Err(ErrorsEnum::WrongCredentials),
     };
 
-    let username_matches = username.eq(&user.username);
-    let password_matches = bcrypt::verify(password, &user.password).unwrap_or(false);
+    let username_matches = login_request.username.eq(&user.username);
+    let password_matches = bcrypt::verify(&login_request.password, &user.password).unwrap_or(false);
 
     if username_matches && password_matches {
         let user_role = Role::from_str(&user.role).expect("Role is not valid");

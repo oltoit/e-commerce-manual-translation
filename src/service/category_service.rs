@@ -1,8 +1,9 @@
 use diesel::{Connection, PgConnection};
+use validator::Validate;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::dao::category_repository;
 use crate::entity::category::{Category, NewCategory, UpdateCategory};
-use crate::errors::error_enums::ErrorsEnum;
+use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG};
 use crate::security::auth_context_holder::AuthUser;
 
 const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
@@ -42,6 +43,8 @@ pub fn get_subcategories_for_id(connection: &mut PgConnection, auth_user: &AuthU
 
 pub fn create_category(connection: &mut PgConnection, auth_user: &AuthUser, create_category: CreateCategoryDto) -> Result<Category, ErrorsEnum> {
     if !auth_user.role.has_admin_permission() { return Err(ErrorsEnum::Forbidden); }
+    if create_category.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
+
     let new_category = NewCategory::from(&create_category);
 
     connection.transaction(move |conn| {
@@ -56,6 +59,8 @@ pub fn create_category(connection: &mut PgConnection, auth_user: &AuthUser, crea
 
 pub fn update_category(connection: &mut PgConnection, auth_user: &AuthUser, id: i64, update_category: UpdateCategoryDto) -> Result<Category, ErrorsEnum> {
     if !auth_user.role.has_admin_permission() { return Err(ErrorsEnum::Forbidden); }
+    if update_category.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
+
     let update_category = UpdateCategory::from(&update_category);
 
     connection.transaction(move |conn| {

@@ -13,8 +13,8 @@ async fn login(payload: web::Json<LoginRequest>) -> impl Responder {
     let data = payload.into_inner();
     let mut connection = connect();
 
-    match security_service::authenticate(&mut connection, &data.username, &data.password) {
+    match security_service::authenticate(&mut connection, data) {
         Ok(token) => HttpResponse::Ok().json(&AuthResponse { token }),
-        Err(e) => e.get_response("/login".to_string())
+        Err(e) => e.get_response("/login")
     }
 }

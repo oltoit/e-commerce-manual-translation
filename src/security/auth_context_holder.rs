@@ -86,7 +86,7 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
 
 
 fn forbidden(req: &ServiceRequest) -> String {
-    serde_json::to_string(&ErrorResponseBody::forbidden(req.path().to_string())).unwrap()
+    serde_json::to_string(&ErrorResponseBody::forbidden(req.path())).unwrap()
 }
 
 fn no_auth_needed(req: &ServiceRequest) -> bool {

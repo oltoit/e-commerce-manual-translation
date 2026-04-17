@@ -2,7 +2,7 @@ use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use crate::config::env_loader::LOADER;
-use crate::errors::error_enums::{ErrorsEnum, TOKEN_GENERATION_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
+use crate::errors::error_enum::{ErrorsEnum, TOKEN_GENERATION_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
 use crate::security::role::Role;
 
 const TOKEN_PREFIX: &'static str = "Bearer";

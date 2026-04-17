@@ -36,7 +36,7 @@ async fn get_categories(req: HttpRequest) -> impl Responder {
 
     let result = match category_service::get_categories(&mut connection, auth_user) {
         Ok(categories) => categories,
-        Err(e) => return e.get_response(req.match_info().as_str().to_string())
+        Err(e) => return e.get_response(req.match_info().as_str())
     };
 
     let resources = result.iter().map(|r| CategoryResource::from_entity(&mut connection, r)).collect::<Vec<CategoryResource>>();
@@ -53,7 +53,7 @@ async fn get_category(path: web::Path<i64>, req: HttpRequest) -> impl Responder 
 
     let result = match category_service::get_category_by_id(&mut connection, auth_user, id) {
         Ok(category) => category,
-        Err(e) => return e.get_response(req.match_info().as_str().to_string())
+        Err(e) => return e.get_response(req.match_info().as_str())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -69,7 +69,7 @@ async fn create_category(req: HttpRequest, new_category: web::Json<CreateCategor
 
     let result = match category_service::create_category(&mut connection, auth_user, new_category.into_inner()) {
         Ok(category) => category,
-        Err(e) => return e.get_response(req.match_info().as_str().to_string())
+        Err(e) => return e.get_response(req.match_info().as_str())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -87,7 +87,7 @@ async fn update_category(req: HttpRequest, path: web::Path<i64>, new_category: w
 
     let result = match category_service::update_category(&mut connection, auth_user, id, new_category) {
         Ok(category) => category,
-        Err(e) => return e.get_response(req.match_info().as_str().to_string())
+        Err(e) => return e.get_response(req.match_info().as_str())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -104,7 +104,7 @@ async fn delete_category(req: HttpRequest, path: web::Path<i64>) -> impl Respond
 
     match category_service::delete_category(&mut connection, auth_user, id) {
         Ok(_) => (),
-        Err(e) => return e.get_response(req.match_info().as_str().to_string())
+        Err(e) => return e.get_response(req.match_info().as_str())
     };
 
     HttpResponse::NoContent().finish()
