@@ -24,10 +24,6 @@ impl Role {
         }
     }
 
-    pub fn has_user_permission(&self) -> bool {
-        self >= &Role::RoleUser
-    }
-    pub fn has_admin_permission(&self) -> bool {
-        self >= &Role::RoleAdmin
-    }
+    pub fn has_user_permission(&self) -> bool { self >= &Role::RoleUser }
+    pub fn has_admin_permission(&self) -> bool { self >= &Role::RoleAdmin }
 }

@@ -56,7 +56,7 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // check if http-method is option, if so always let it pass
+        // calls with the http-option method should aways be let through without authentication
         if no_auth_needed(&req) {
             let fut = self.service.call(req);
             return Box::pin(async move {

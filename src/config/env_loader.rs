@@ -8,6 +8,7 @@ pub struct EnvLoader {
     fixer_url: String,
     fixer_api_key: String,
     token_secret_key: String,
+    database_url: String,
 }
 
 impl EnvLoader {
@@ -21,6 +22,7 @@ impl EnvLoader {
             fixer_url: std::env::var("FIXER_URL")?,
             fixer_api_key: std::env::var("FIXER_API_KEY")?,
             token_secret_key: std::env::var("TOKEN_SECRET_KEY")?,
+            database_url: std::env::var("DATABASE_URL")?,
         })
     }
 
@@ -30,6 +32,7 @@ impl EnvLoader {
     pub fn get_fixer_url(&self) -> &str { &self.fixer_url }
     pub fn get_fixer_api_key(&self) -> &str { &self.fixer_api_key }
     pub fn get_token_secret_key(&self) -> &str { &self.token_secret_key }
+    pub fn get_database_url(&self) -> &str { &self.database_url }
 
     pub fn get_adress(&self) -> String {
         format!("{}:{}", self.url, self.port)
@@ -42,7 +45,7 @@ impl EnvLoader {
 
 /// Global env loader
 /// Is set once in the main function
-/// If setting it fails the programm will terminate
+/// If setting it fails the programm should terminate
 pub static LOADER: OnceCell<EnvLoader> = OnceCell::new();
 
 pub fn set_loader() -> std::io::Result<()> {

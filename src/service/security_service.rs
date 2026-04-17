@@ -1,12 +1,11 @@
-use crate::dao::connect::connect;
-use crate::dao::user_repository::get_by_username;
+use diesel::PgConnection;
+use crate::dao::user_repository;
 use crate::errors::error_enums::{ErrorsEnum};
 use crate::security::jwt_handler::generate_token;
 use crate::security::role::Role;
 
-pub fn authenticate(username: &str, password: &str) -> Result<String, ErrorsEnum> {
-    let mut connection = connect();
-    let user = match get_by_username(&mut connection, username) {
+pub fn authenticate(connection: &mut PgConnection, username: &str, password: &str) -> Result<String, ErrorsEnum> {
+    let user = match user_repository::get_by_username(connection, username) {
         Ok(user) => user,
         Err(_) => return Err(ErrorsEnum::WrongCredentials),
     };

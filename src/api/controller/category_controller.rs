@@ -2,15 +2,17 @@ use actix_web::{delete, get, options, post, put, web, HttpMessage, HttpRequest, 
 use actix_web::web::ServiceConfig;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
-use crate::dao::connect::connect;
+use crate::api::controller::connect::connect;
 use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_service;
 
 // TODO: get the paths for responses out of the function definition
 // TODO: validator doesn't seem to work correctly yet -> created empty name
 // TODO: -> see how name==null works -> behaviour not explicit right now
+// TODO: if id cannot be parsed -> return 400 => create default error handler
 
 // TODO: register all routes from controller here
+// TODO: see if options for /categories/{id} is needed
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(options_categories);
     cfg.service(get_categories);
@@ -34,7 +36,7 @@ async fn get_categories(req: HttpRequest) -> impl Responder {
 
     let result = match category_service::get_categories(&mut connection, auth_user) {
         Ok(categories) => categories,
-        Err(e) => return e.get_response("/categories".to_string())
+        Err(e) => return e.get_response(req.match_info().as_str().to_string())
     };
 
     let resources = result.iter().map(|r| CategoryResource::from_entity(&mut connection, r)).collect::<Vec<CategoryResource>>();
@@ -51,7 +53,7 @@ async fn get_category(path: web::Path<i64>, req: HttpRequest) -> impl Responder 
 
     let result = match category_service::get_category_by_id(&mut connection, auth_user, id) {
         Ok(category) => category,
-        Err(e) => return e.get_response(format!("/categories/{}", id))
+        Err(e) => return e.get_response(req.match_info().as_str().to_string())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -67,7 +69,7 @@ async fn create_category(req: HttpRequest, new_category: web::Json<CreateCategor
 
     let result = match category_service::create_category(&mut connection, auth_user, new_category.into_inner()) {
         Ok(category) => category,
-        Err(e) => return e.get_response("/categories".to_string())
+        Err(e) => return e.get_response(req.match_info().as_str().to_string())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -85,7 +87,7 @@ async fn update_category(req: HttpRequest, path: web::Path<i64>, new_category: w
 
     let result = match category_service::update_category(&mut connection, auth_user, id, new_category) {
         Ok(category) => category,
-        Err(e) => return e.get_response(format!("/categories/{}", id))
+        Err(e) => return e.get_response(req.match_info().as_str().to_string())
     };
 
     let resource = CategoryResourceHal::from_entity(&mut connection, &result);
@@ -102,7 +104,7 @@ async fn delete_category(req: HttpRequest, path: web::Path<i64>) -> impl Respond
 
     match category_service::delete_category(&mut connection, auth_user, id) {
         Ok(_) => (),
-        Err(e) => return e.get_response(format!("/categories/{}", id))
+        Err(e) => return e.get_response(req.match_info().as_str().to_string())
     };
 
     HttpResponse::NoContent().finish()

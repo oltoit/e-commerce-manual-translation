@@ -4,7 +4,6 @@ use crate::dao::category_repository;
 use crate::entity::category::{Category, NewCategory, UpdateCategory};
 use crate::errors::error_enums::ErrorsEnum;
 use crate::security::auth_context_holder::AuthUser;
-// TODO: make the functions that mutate db transactional with PgConnection.transaction()
 
 const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
 
@@ -79,9 +78,9 @@ pub fn delete_category(connection: &mut PgConnection, auth_user: &AuthUser, id: 
         match category_repository::delete(conn, id) {
             Ok(count) => {
                 if count <= 0 {
-                    return Err(ErrorsEnum::NotFound(CATEGORY_NOT_FOUND_MSG.to_string()));
+                    Err(ErrorsEnum::NotFound(CATEGORY_NOT_FOUND_MSG.to_string()))
                 } else {
-                    return Ok(count);
+                    Ok(count)
                 }
             },
             Err(_) => Err(ErrorsEnum::DeletionError("error deleting Category".to_string()))
