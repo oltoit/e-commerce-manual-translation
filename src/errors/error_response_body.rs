@@ -30,6 +30,10 @@ impl<'a> ErrorResponseBody<'a> {
         ErrorResponseBody::new(403, "Forbidden", "Access Denied", path)
     }
 
+    pub fn unauthorized(path: &'a str) -> Self {
+        ErrorResponseBody::new(401, "Unauthorized", "Access Denied", path)
+    }
+
     pub fn internal_server_error(path: &'a str, msg: &'a str) -> Self {
         ErrorResponseBody::new(500, "Internal Server Error", msg, path)
     }

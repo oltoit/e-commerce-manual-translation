@@ -6,15 +6,9 @@ use crate::api::controller::connect::connect;
 use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_service;
 
-// TODO: get the paths for responses out of the function definition
-// TODO: validator doesn't seem to work correctly yet -> created empty name
-// TODO: -> see how name==null works -> behaviour not explicit right now
-// TODO: if id cannot be parsed -> return 400 => create default error handler
-
-// TODO: register all routes from controller here
-// TODO: see if options for /categories/{id} is needed
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(options_categories);
+    cfg.service(options_category);
     cfg.service(get_categories);
     cfg.service(get_category);
     cfg.service(create_category);
@@ -26,6 +20,9 @@ pub fn config(cfg: &mut ServiceConfig) {
 async fn options_categories() -> impl Responder {
     HttpResponse::Ok().finish()
 }
+
+#[options("/categories/{id}")]
+async fn options_category() -> impl Responder { HttpResponse::Ok().finish() }
 
 #[get("/categories")]
 async fn get_categories(req: HttpRequest) -> impl Responder {
@@ -103,9 +100,7 @@ async fn delete_category(req: HttpRequest, path: web::Path<i64>) -> impl Respond
     let mut connection = connect();
 
     match category_service::delete_category(&mut connection, auth_user, id) {
-        Ok(_) => (),
+        Ok(_) => HttpResponse::NoContent().finish(),
         Err(e) => return e.get_response(req.match_info().as_str())
-    };
-
-    HttpResponse::NoContent().finish()
+    }
 }

@@ -16,12 +16,6 @@ pub fn get_by_id(connection: &mut PgConnection, category_id: i64) -> QueryResult
     app_category.find(category_id).select(Category::as_select()).get_result(connection)
 }
 
-pub fn get_subcategories(connection: &mut PgConnection, category_id: i64) -> QueryResult<Vec<Category>> {
-    use crate::schema::app_category::dsl::app_category;
-
-    app_category.filter(parentid.eq(category_id)).select(Category::as_select()).get_results(connection)
-}
-
 pub fn insert(connection: &mut PgConnection, mut new_category: NewCategory) -> QueryResult<Category> {
     let next_id = get_next_val(connection)?;
 
@@ -43,4 +37,13 @@ pub fn delete(connection: &mut PgConnection, category_id: i64) -> QueryResult<us
     use crate::schema::app_category::dsl::app_category;
 
     diesel::delete(app_category.find(category_id)).execute(connection)
+}
+
+/* Subcategory functions */
+
+pub fn get_subcategories(connection: &mut PgConnection, category_id: i64) -> QueryResult<Vec<Category>> {
+    use crate::schema::app_category::dsl::app_category;
+
+    app_category.find(category_id).get_result::<Category>(connection)?;
+    app_category.filter(parentid.eq(category_id)).select(Category::as_select()).get_results(connection)
 }

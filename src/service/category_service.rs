@@ -3,10 +3,9 @@ use validator::Validate;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::dao::category_repository;
 use crate::entity::category::{Category, NewCategory, UpdateCategory};
-use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG};
+use crate::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, DTO_NOT_VALID_ERROR_MSG};
 use crate::security::auth_context_holder::AuthUser;
 
-const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
 
 pub fn get_categories(connection: &mut PgConnection, auth_user: &AuthUser) -> Result<Vec<Category>, ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
@@ -26,17 +25,6 @@ pub fn get_category_by_id(connection: &mut PgConnection, auth_user: &AuthUser, i
 
     match result {
         Ok(category) => Ok(category),
-        Err(_) => Err(ErrorsEnum::NotFound(CATEGORY_NOT_FOUND_MSG.to_string()))
-    }
-}
-
-pub fn get_subcategories_for_id(connection: &mut PgConnection, auth_user: &AuthUser, id: i64) -> Result<Vec<Category>, ErrorsEnum> {
-    if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
-
-    let result = category_repository::get_subcategories(connection, id);
-
-    match result {
-        Ok(categories) => Ok(categories),
         Err(_) => Err(ErrorsEnum::NotFound(CATEGORY_NOT_FOUND_MSG.to_string()))
     }
 }

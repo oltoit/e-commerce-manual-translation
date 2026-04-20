@@ -1,6 +1,6 @@
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
 use actix_web::error::{InternalError, JsonPayloadError};
-use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller};
+use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_subcategories_controller};
 use e_commerce_manual_translation::config::env_loader::{set_loader, LOADER};
 use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
 use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
@@ -22,6 +22,7 @@ async fn main() -> std::io::Result<()> {
                 web::scope("")
                     .wrap(AuthContextHolder)
                     .configure(category_controller::config)
+                    .configure(category_subcategories_controller::config)
             )
             .default_service(web::route().to(|| async {
                 HttpResponse::ImATeapot().finish()

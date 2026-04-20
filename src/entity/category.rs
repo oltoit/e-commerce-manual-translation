@@ -13,6 +13,7 @@ pub struct Category{
 
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::app_category)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewCategory<'a> {
     id: Option<i64>,
     pub name: &'a str,
@@ -33,6 +34,8 @@ impl<'a> NewCategory<'a> {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::app_category)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UpdateCategory<'a> {
     pub name: &'a str,
     pub parentid: Option<i64>,
@@ -41,5 +44,9 @@ pub struct UpdateCategory<'a> {
 impl<'a> UpdateCategory<'a> {
     pub fn from(update_category: &'a UpdateCategoryDto) -> Self {
         UpdateCategory {name: &update_category.name, parentid: None}
+    }
+
+    pub fn from_category(category: &'a Category) -> Self {
+        UpdateCategory {name: &category.name, parentid: category.parentid}
     }
 }

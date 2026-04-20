@@ -1,7 +1,7 @@
 use actix_web::HttpResponse;
 use crate::errors::error_response_body::ErrorResponseBody;
 
-// TODO: probably refactor all of there errors into their own errors that implement actix::ResponseError
+// TODO: probably refactor all of these errors into their own errors that implement actix::ResponseError
 
 pub enum ErrorsEnum {
     WrongCredentials,
@@ -14,7 +14,9 @@ pub enum ErrorsEnum {
     DeletionError(String),
     DieselError(String),
     DTONotValid(String),
-    JsonParsingError(String)
+    JsonParsingError(String),
+    CategoriesAlreadyAssociated(String),
+    CategoriesNotAssociated(String),
 }
 
 impl From<diesel::result::Error> for ErrorsEnum {
@@ -26,6 +28,9 @@ impl From<diesel::result::Error> for ErrorsEnum {
 pub const TOKEN_PARSING_ERROR_MSG: &'static str = "error parsing the token";
 pub const TOKEN_GENERATION_ERROR_MSG: &'static str = "error generating the token";
 pub const DTO_NOT_VALID_ERROR_MSG: &'static str = "DTO was not valid";
+pub const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
+pub const SUBCATEGORY_UPDATE_ERROR_MSG: &'static str = "error updating subcategory";
+
 
 impl ErrorsEnum {
     pub fn get_response(&self, path: &str) -> HttpResponse {
@@ -47,7 +52,7 @@ impl ErrorsEnum {
                     ErrorResponseBody::not_found(path, msg)
                 ),
             ErrorsEnum::Forbidden =>
-                HttpResponse::Unauthorized().json(
+                HttpResponse::Forbidden().json(
                     ErrorResponseBody::forbidden(path)
                 ),
             ErrorsEnum::CreationError(msg) =>
@@ -74,6 +79,14 @@ impl ErrorsEnum {
                 HttpResponse::BadRequest().json(
                     ErrorResponseBody::bad_request(path, msg)
                 ),
+            ErrorsEnum::CategoriesAlreadyAssociated(msg) =>
+                HttpResponse::BadRequest().json(
+                  ErrorResponseBody::bad_request(path, msg)
+                ),
+            ErrorsEnum::CategoriesNotAssociated(msg) =>
+                HttpResponse::BadRequest().json(
+                    ErrorResponseBody::bad_request(path, msg)
+                )
         }
     }
 }

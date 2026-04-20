@@ -12,6 +12,7 @@ pub struct Product {
 
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::app_product)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewProduct<'a> {
     id: Option<i64>,
     pub name: &'a str,
@@ -30,6 +31,7 @@ impl<'a> NewProduct<'a> {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::app_product)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UpdateProduct<'a> {
     pub name: &'a str,
     pub price: f64,

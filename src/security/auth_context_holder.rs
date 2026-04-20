@@ -1,7 +1,8 @@
 use std::future::{ready, Ready};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::Method;
-use actix_web::HttpMessage;
+use actix_web::{HttpMessage, HttpResponse};
+use actix_web::error::InternalError;
 use futures_util::future::LocalBoxFuture;
 use crate::errors::error_response_body::ErrorResponseBody;
 use crate::security::jwt_handler::{parse_token, TokenClaims};
@@ -56,7 +57,7 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // calls with the http-option method should aways be let through without authentication
+        // calls with the http-option method should always be let through without authentication
         if no_auth_needed(&req) {
             let fut = self.service.call(req);
             return Box::pin(async move {
@@ -72,7 +73,16 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
 
         let auth = match parse_token(token) {
             Ok(auth) => AuthUser::from(auth),
-            Err(_) => return Box::pin(ready(Err(actix_web::error::ErrorForbidden(forbidden(&req))))),
+            Err(_) => {
+                let path = req.path();
+                return Box::pin(
+                    ready(
+                        Err(
+                            InternalError::from_response("forbidden", forbidden(path)).into()
+                        )
+                    )
+                );
+            },
         };
 
         req.extensions_mut().insert(auth);
@@ -85,8 +95,8 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
 }
 
 
-fn forbidden(req: &ServiceRequest) -> String {
-    serde_json::to_string(&ErrorResponseBody::forbidden(req.path())).unwrap()
+fn forbidden(path: &str) -> HttpResponse {
+    HttpResponse::Forbidden().json(ErrorResponseBody::forbidden(path))
 }
 
 fn no_auth_needed(req: &ServiceRequest) -> bool {
