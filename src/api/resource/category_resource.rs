@@ -1,6 +1,6 @@
 use diesel::PgConnection;
 use serde::Serialize;
-use crate::api::resource::relation::Relation;
+use crate::api::resource::relation::{HalLink, Relation};
 use crate::config::env_loader::LOADER;
 use crate::entity::category::Category;
 use crate::service::product_category_service::get_products_for_categories_recursive;
@@ -60,19 +60,19 @@ fn get_products_for_resource(id: i64) -> Relation {
 
 // For Hateoas messages in the weird almost HAL format of the source-application
 #[derive(Serialize)]
-pub struct CategoryResourceHal<'a> {
-    name: &'a str,
+pub struct CategoryResourceHal {
+    name: String,
     #[serde(rename = "_links")]
     links: HalLinks
 }
 
-impl<'a> CategoryResourceHal<'a> {
-    fn new(name: &'a str) -> Self {
+impl CategoryResourceHal {
+    fn new(name: String) -> Self {
         Self { name, links: HalLinks { self_link: None, parent: None, subcategories: None, products: None } }
     }
-    pub fn from_entity(connection: &mut PgConnection, entity: &'a Category) -> Self {
+    pub fn from_entity(connection: &mut PgConnection, entity: &Category) -> Self {
         let name = &entity.name;
-        let mut category_resource_hal = CategoryResourceHal::new(name);
+        let mut category_resource_hal = CategoryResourceHal::new(name.to_string());
 
         category_resource_hal.links.self_link = Some(HalLink { href: get_self_for_resource(entity.id).href });
         category_resource_hal.links.subcategories = Some(HalLink {href: get_subcategories_for_resource(entity.id).href });
@@ -99,9 +99,4 @@ pub struct HalLinks {
     pub subcategories: Option<HalLink>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub products: Option<HalLink>,
-}
-
-#[derive(Serialize)]
-pub struct HalLink {
-    pub href: String,
 }

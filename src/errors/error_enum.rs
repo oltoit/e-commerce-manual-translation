@@ -17,6 +17,11 @@ pub enum ErrorsEnum {
     JsonParsingError(String),
     CategoriesAlreadyAssociated(String),
     CategoriesNotAssociated(String),
+    NoPropertyError(String),
+    EnvLoaderError(String),
+    ClientError,
+    FixerApiError,
+    WrongCurrency(String)
 }
 
 impl From<diesel::result::Error> for ErrorsEnum {
@@ -29,6 +34,7 @@ pub const TOKEN_PARSING_ERROR_MSG: &'static str = "error parsing the token";
 pub const TOKEN_GENERATION_ERROR_MSG: &'static str = "error generating the token";
 pub const DTO_NOT_VALID_ERROR_MSG: &'static str = "DTO was not valid";
 pub const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
+pub const PRODUCT_NOT_FOUND_MSG: &'static str = "product not found";
 pub const SUBCATEGORY_UPDATE_ERROR_MSG: &'static str = "error updating subcategory";
 
 
@@ -86,7 +92,27 @@ impl ErrorsEnum {
             ErrorsEnum::CategoriesNotAssociated(msg) =>
                 HttpResponse::BadRequest().json(
                     ErrorResponseBody::bad_request(path, msg)
-                )
+                ),
+            ErrorsEnum::NoPropertyError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::EnvLoaderError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
+            ErrorsEnum::ClientError =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, "error setting client")
+                ),
+            ErrorsEnum::FixerApiError =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, "error with fixer api")
+                ),
+            ErrorsEnum::WrongCurrency(msg) =>
+                HttpResponse::BadRequest().json(
+                    ErrorResponseBody::bad_request(path, msg)
+                ),
         }
     }
 }

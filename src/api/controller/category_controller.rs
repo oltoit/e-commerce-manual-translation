@@ -101,6 +101,6 @@ async fn delete_category(req: HttpRequest, path: web::Path<i64>) -> impl Respond
 
     match category_service::delete_category(&mut connection, auth_user, id) {
         Ok(_) => HttpResponse::NoContent().finish(),
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => e.get_response(req.match_info().as_str())
     }
 }

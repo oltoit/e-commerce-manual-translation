@@ -35,7 +35,6 @@ async fn get_subcategories(path: web::Path<i64>, req: HttpRequest) -> impl Respo
     HttpResponse::Ok().json(&resources)
 }
 
-// FIXME: number of links doesn't match up with test
 #[post("/categories/{id}/subcategories/{childid}")]
 async fn create_subcategory(path: web::Path<(i64, i64)>, req: HttpRequest) -> impl Responder {
     let (id, childid) = path.into_inner();

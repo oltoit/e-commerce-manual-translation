@@ -34,11 +34,13 @@ impl EnvLoader {
     pub fn get_token_secret_key(&self) -> &str { &self.token_secret_key }
     pub fn get_database_url(&self) -> &str { &self.database_url }
 
-    pub fn get_adress(&self) -> String {
+    /// Gets the address of the server including it's port
+    pub fn get_address(&self) -> String {
         format!("{}:{}", self.url, self.port)
     }
 
-    pub fn get_fixer_adress(&self) -> String {
+    /// Gets the fixer api-address with the api-key included
+    pub fn get_fixer_address(&self) -> String {
         format!("{}{}", self.fixer_url, self.fixer_api_key)
     }
 }
