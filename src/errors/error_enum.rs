@@ -21,7 +21,8 @@ pub enum ErrorsEnum {
     EnvLoaderError(String),
     ClientError,
     FixerApiError,
-    WrongCurrency(String)
+    WrongCurrency(String),
+    ProductCategoryError(String)
 }
 
 impl From<diesel::result::Error> for ErrorsEnum {
@@ -35,6 +36,7 @@ pub const TOKEN_GENERATION_ERROR_MSG: &'static str = "error generating the token
 pub const DTO_NOT_VALID_ERROR_MSG: &'static str = "DTO was not valid";
 pub const CATEGORY_NOT_FOUND_MSG: &'static str = "category not found";
 pub const PRODUCT_NOT_FOUND_MSG: &'static str = "product not found";
+pub const USER_NOT_FOUND_MSG: &'static str = "user not found";
 pub const SUBCATEGORY_UPDATE_ERROR_MSG: &'static str = "error updating subcategory";
 
 
@@ -113,6 +115,10 @@ impl ErrorsEnum {
                 HttpResponse::BadRequest().json(
                     ErrorResponseBody::bad_request(path, msg)
                 ),
+            ErrorsEnum::ProductCategoryError(msg) =>
+                HttpResponse::BadRequest().json(
+                    ErrorResponseBody::bad_request(path, msg)
+                )
         }
     }
 }

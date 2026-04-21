@@ -1,12 +1,13 @@
 use diesel::pg::Pg;
 use diesel::prelude::*;
+use diesel::query_dsl::methods::ThenOrderDsl;
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
 use crate::entity::user::User;
 use crate::errors::error_enum::ErrorsEnum;
 use crate::schema::app_product::BoxedQuery;
 use crate::security::auth_context_holder::AuthUser;
 
-#[derive(Queryable, QueryableByName, Selectable, Identifiable, Associations)]
+#[derive(Queryable, QueryableByName, Selectable, Identifiable, Associations, Clone)]
 #[diesel(table_name = crate::schema::app_product)]
 #[diesel(belongs_to(User, foreign_key = userid))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -63,56 +64,106 @@ impl<'a> UpdateProduct<'a> {
 /* Sort options for products */
 
 pub struct ProductSort {
-    pub field: String,
-    pub order: String,
+    field: FieldOptions,
+    order: OrderOptions,
 }
 
 pub const DEFAULT_SORT_ORDER: &str = "asc";
 pub const DEFAULT_SORT_FIELD: &str = "id";
-const SORT_ORDER_OPTIONS: [&str; 2] = ["asc", "desc"];
-const SORT_FIELD_OPTIONS: [&str; 4] = ["id", "name", "price", "user"];
+
+enum OrderOptions { Asc, Desc }
+impl OrderOptions {
+    fn from_str(order: &str) -> Option<Self> {
+        match order.to_ascii_lowercase().as_str() {
+            "asc" => Some(OrderOptions::Asc),
+            "desc" => Some(OrderOptions::Desc),
+            _ => None,
+        }
+    }
+    fn to_string(&self) -> String {
+        match self {
+            OrderOptions::Asc => "asc".to_string(),
+            OrderOptions::Desc => "desc".to_string(),
+        }
+    }
+}
+enum FieldOptions { Id, Name, Price, User }
+impl FieldOptions {
+    fn from_str(order: &str) -> Option<Self> {
+        match order.to_ascii_lowercase().as_str() {
+            "id" => Some(FieldOptions::Id),
+            "name" => Some(FieldOptions::Name),
+            "price" => Some(FieldOptions::Price),
+            "user" => Some(FieldOptions::User),
+            _ => None,
+        }
+    }
+    fn to_string(&self) -> String {
+        match self {
+            FieldOptions::Id => "id".to_string(),
+            FieldOptions::Name => "name".to_string(),
+            FieldOptions::Price => "price".to_string(),
+            FieldOptions::User => "user".to_string(),
+        }
+    }
+}
 
 impl ProductSort {
     pub fn apply_to_query<'a>(&self, query: BoxedQuery<'a, Pg>) -> BoxedQuery<'a, Pg> {
-        match (self.field.as_str(), self.field.as_str()) {
-            ("name", "desc") => query.order(crate::schema::app_product::name.desc()),
-            ("name", "asc") => query.order(crate::schema::app_product::name.asc()),
-            ("price", "desc") => query.order(crate::schema::app_product::price.desc()),
-            ("price", "asc") => query.order(crate::schema::app_product::price.asc()),
-            ("user", "desc") => query.order(crate::schema::app_product::userid.desc()),
-            ("user", "asc") => query.order(crate::schema::app_product::userid.asc()),
-            (_, "desc") => query.order(crate::schema::app_product::id.desc()),
-            (_, _) => query.order(crate::schema::app_product::id.asc()),
+        match (&self.field, &self.order) {
+            (FieldOptions::Id, OrderOptions::Asc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::id.asc()),
+            (FieldOptions::Id, OrderOptions::Desc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::id.desc()),
+            (FieldOptions::Name, OrderOptions::Asc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::name.asc()),
+            (FieldOptions::Name, OrderOptions::Desc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::name.desc()),
+            (FieldOptions::Price, OrderOptions::Asc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::price.asc()),
+            (FieldOptions::Price, OrderOptions::Desc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::price.desc()),
+            (FieldOptions::User, OrderOptions::Asc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::userid.asc()),
+            (FieldOptions::User, OrderOptions::Desc) => ThenOrderDsl::then_order_by(query, crate::schema::app_product::userid.desc()),
         }
     }
 
-    pub fn from_str(sort: &str) -> Result<Self, ErrorsEnum> {
-        let mut split = sort.split(',');
-        let field = split.next().unwrap_or(DEFAULT_SORT_FIELD).to_string();
-        let order = split.next().unwrap_or(DEFAULT_SORT_ORDER).to_string();
+    pub fn from_str_vec(sorts: Vec<&str>) -> Result<Vec<Self>, ErrorsEnum> {
+        let mut product_sorts = Vec::with_capacity(sorts.len());
 
-        let field = validate_field(&field)?;
-        let order = validate_order(&order)?;
+        for sort in sorts {
+            let mut split = sort.split(',');
+            let field = split.next().unwrap_or(DEFAULT_SORT_FIELD).to_string();
+            let order = split.next().unwrap_or(DEFAULT_SORT_ORDER).to_string();
 
-        Ok(ProductSort { field, order })
-    }
-}
+            let field = validate_field(&field)?;
+            let order = validate_order(&order)?;
 
-fn validate_field(field: &str) -> Result<String, ErrorsEnum> {
-    if SORT_FIELD_OPTIONS.contains(&field) {
-        // the source-application uses user instead of userid for sorting, so user needs to be mapped to userid here
-        match field {
-            "user" => Ok("userid".to_string()),
-            _ => Ok(field.to_string()),
+            product_sorts.push(ProductSort { field, order });
         }
-    } else {
-        Err(ErrorsEnum::NoPropertyError(format!("no property '{}' found", field)))
+
+        Ok(product_sorts)
     }
 }
-fn validate_order(order: &str) -> Result<String, ErrorsEnum> {
-    if SORT_ORDER_OPTIONS.contains(&order) {
-        Ok(order.to_string())
-    } else {
-        Err(ErrorsEnum::NoPropertyError(format!("no order '{}' found", order)))
+
+pub fn product_sorts_to_sql_string(sorts: Vec<ProductSort>) -> String {
+    let mut sql_string = String::new();
+
+    for sort in sorts {
+        sql_string.push_str(&format!("{} {}, ", sort.field.to_string(), sort.order.to_string()));
+    }
+
+    // trim last comma since sql will fail if it's still there
+    if let Some(i) = sql_string.rfind(',') {
+        sql_string.truncate(i);
+    }
+
+    sql_string
+}
+
+fn validate_field(field: &str) -> Result<FieldOptions, ErrorsEnum> {
+    match FieldOptions::from_str(field) {
+        Some(field) => Ok(field),
+        None => Err(ErrorsEnum::NoPropertyError(format!("no field '{}' found", field))),
+    }
+}
+fn validate_order(order: &str) -> Result<OrderOptions, ErrorsEnum> {
+    match OrderOptions::from_str(order) {
+        Some(order) => Ok(order),
+        None => Err(ErrorsEnum::NoPropertyError(format!("no order '{}' found", order))),
     }
 }

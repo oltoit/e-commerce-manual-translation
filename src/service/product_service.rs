@@ -6,6 +6,7 @@ use crate::dao::product_repository;
 use crate::entity::product::{NewProduct, ProductWithUser, UpdateProduct};
 use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
 use crate::security::auth_context_holder::AuthUser;
+use crate::service::auth_helper::can_mutate_product_by_id;
 use crate::service::currency_conversion_service;
 use crate::service::currency_conversion_service::SRC_CURRENCY;
 
@@ -65,7 +66,7 @@ pub async fn update_product(connection: &mut PgConnection, auth_user: &AuthUser,
     let update_product = UpdateProduct::from_dto(&update_product, auth_user);
 
     connection.transaction(move |conn| {
-        if !can_mutate_product(conn, auth_user, product_id)? {
+        if !can_mutate_product_by_id(conn, auth_user, product_id)? {
             return Err(ErrorsEnum::Forbidden);
         }
 
@@ -80,7 +81,7 @@ pub fn delete_product(connection: &mut PgConnection, auth_user: &AuthUser, produ
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
 
     connection.transaction(move |conn| {
-        if !can_mutate_product(conn, auth_user, product_id)? {
+        if !can_mutate_product_by_id(conn, auth_user, product_id)? {
             return Err(ErrorsEnum::Forbidden);
         }
 
@@ -92,13 +93,4 @@ pub fn delete_product(connection: &mut PgConnection, auth_user: &AuthUser, produ
             Err(_) => Err(ErrorsEnum::DeletionError("error deleting Product".to_string()))
         }
     })
-}
-
-fn can_mutate_product(connection: &mut PgConnection, auth_user: &AuthUser, product_id: i64) -> Result<bool, ErrorsEnum> {
-    let is_admin = auth_user.role.has_admin_permission();
-    let is_owner = match product_repository::get_by_id(connection, product_id) {
-        Ok(product) => product.userid == auth_user.id,
-        Err(_) => return Err(ErrorsEnum::NotFound(PRODUCT_NOT_FOUND_MSG.to_string()))
-    };
-    Ok(is_admin || is_owner)
 }

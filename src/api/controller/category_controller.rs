@@ -1,4 +1,4 @@
-use actix_web::{delete, get, options, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
@@ -7,22 +7,12 @@ use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_service;
 
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(options_categories);
-    cfg.service(options_category);
     cfg.service(get_categories);
     cfg.service(get_category);
     cfg.service(create_category);
     cfg.service(update_category);
     cfg.service(delete_category);
 }
-
-#[options("/categories")]
-async fn options_categories() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
-
-#[options("/categories/{id}")]
-async fn options_category() -> impl Responder { HttpResponse::Ok().finish() }
 
 #[get("/categories")]
 async fn get_categories(req: HttpRequest) -> impl Responder {
@@ -36,7 +26,10 @@ async fn get_categories(req: HttpRequest) -> impl Responder {
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resources = result.iter().map(|r| CategoryResource::from_entity(&mut connection, r)).collect::<Vec<CategoryResource>>();
+    let resources = match CategoryResource::map_from_entities(&mut connection, auth_user, &result) {
+        Ok(resources) => resources,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Ok().json(&resources)
 }
 
@@ -53,7 +46,10 @@ async fn get_category(path: web::Path<i64>, req: HttpRequest) -> impl Responder 
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    let resource = match CategoryResourceHal::from_entity(&mut connection, auth_user, &result) {
+        Ok(resource) => resource,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Ok().json(&resource)
 }
 
@@ -69,7 +65,10 @@ async fn create_category(req: HttpRequest, new_category: web::Json<CreateCategor
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    let resource = match CategoryResourceHal::from_entity(&mut connection, auth_user, &result) {
+        Ok(resource) => resource,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Created().json(&resource)
 }
 
@@ -87,7 +86,10 @@ async fn update_category(req: HttpRequest, path: web::Path<i64>, new_category: w
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    let resource = match CategoryResourceHal::from_entity(&mut connection, auth_user, &result) {
+        Ok(resource) => resource,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Ok().json(&resource)
 }
 

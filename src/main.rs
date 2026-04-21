@@ -1,6 +1,7 @@
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web::error::{InternalError, JsonPayloadError};
-use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_subcategories_controller, product_controller};
+use actix_web::http::Method;
+use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
 use e_commerce_manual_translation::config::env_loader::{set_loader, LOADER};
 use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
 use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
@@ -24,8 +25,9 @@ async fn main() -> std::io::Result<()> {
                     .configure(category_controller::config)
                     .configure(category_subcategories_controller::config)
                     .configure(product_controller::config)
-            ).default_service(web::route().to(|| async {
-                HttpResponse::ImATeapot().finish()
+                    .configure(category_products_controller::config)
+            ).default_service(web::to(|req: HttpRequest| async move {
+                default_handler(req)
             }))
     })
     // FIXME: remove unwrap
@@ -37,4 +39,15 @@ async fn main() -> std::io::Result<()> {
 fn handle_json_error(err: JsonPayloadError, req: &HttpRequest) -> InternalError<JsonPayloadError> {
     let msg = err.to_string();
     InternalError::from_response(err, ErrorsEnum::JsonParsingError(msg).get_response(req.path()))
+}
+
+fn default_handler(req: HttpRequest) -> impl Responder {
+    if req.resource_map().has_resource(req.path()) {
+        if req.method() == Method::OPTIONS {
+            return HttpResponse::Ok().finish();
+        }
+        HttpResponse::MethodNotAllowed().finish()
+    } else {
+        HttpResponse::ImATeapot().finish()
+    }
 }

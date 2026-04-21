@@ -1,9 +1,12 @@
 use diesel::PgConnection;
 use serde::Serialize;
+use crate::api::controller::pagination::Pagination;
 use crate::api::resource::relation::{HalLink, Relation};
 use crate::config::env_loader::LOADER;
 use crate::entity::category::Category;
-use crate::service::product_category_service::get_products_for_categories_recursive;
+use crate::errors::error_enum::ErrorsEnum;
+use crate::security::auth_context_holder::AuthUser;
+use crate::service::category_products_service::get_products_for_category;
 
 #[derive(Serialize)]
 pub struct CategoryResource<'a> {
@@ -12,7 +15,7 @@ pub struct CategoryResource<'a> {
 }
 
 impl<'a> CategoryResource<'a> {
-    pub fn from_entity(connection: &mut PgConnection, entity: &'a Category) -> Self {
+    pub fn from_entity(connection: &mut PgConnection, auth_user: &AuthUser, entity: &'a Category) -> Result<Self, ErrorsEnum> {
         let name = &entity.name;
         let mut links = vec![];
 
@@ -26,11 +29,19 @@ impl<'a> CategoryResource<'a> {
         // The Set is always initialized, just not always filled.
         links.push(get_subcategories_for_resource(entity.id));
 
-        if get_products_for_categories_recursive(connection, entity.id).len() > 0 {
+        let mut pagination = Pagination::default();
+        pagination.set_size(1);
+        if get_products_for_category(connection, auth_user, &pagination, entity.id)?.0.len() > 0 {
             links.push(get_products_for_resource(entity.id))
         }
 
-        Self { name, links }
+        Ok(Self { name, links })
+    }
+
+    pub fn map_from_entities(connection: &mut PgConnection, auth_user: &AuthUser, result: &'a Vec<Category>) -> Result<Vec<Self>, ErrorsEnum> {
+        result.iter().map(|r|
+            CategoryResource::from_entity(connection, auth_user, r)
+        ).collect::<Result<Vec<CategoryResource>, ErrorsEnum>>()
     }
 }
 
@@ -70,7 +81,7 @@ impl CategoryResourceHal {
     fn new(name: String) -> Self {
         Self { name, links: HalLinks { self_link: None, parent: None, subcategories: None, products: None } }
     }
-    pub fn from_entity(connection: &mut PgConnection, entity: &Category) -> Self {
+    pub fn from_entity(connection: &mut PgConnection, auth_user: &AuthUser, entity: &Category) -> Result<Self, ErrorsEnum> {
         let name = &entity.name;
         let mut category_resource_hal = CategoryResourceHal::new(name.to_string());
 
@@ -80,11 +91,14 @@ impl CategoryResourceHal {
         if entity.parentid.is_some() {
             category_resource_hal.links.parent = Some(HalLink { href: get_parent_for_resource(entity.parentid.unwrap()).href });
         }
-        if get_products_for_categories_recursive(connection, entity.id).len() > 0 {
+
+        let mut pagination = Pagination::default();
+        pagination.set_size(1);
+        if get_products_for_category(connection, auth_user, &pagination, entity.id)?.0.len() > 0 {
             category_resource_hal.links.products = Some(HalLink { href: get_products_for_resource(entity.id).href });
         }
 
-        category_resource_hal
+        Ok(category_resource_hal)
     }
 }
 

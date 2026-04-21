@@ -1,15 +1,14 @@
 use crate::service::product_service;
 use crate::security::auth_context_holder::AuthUser;
-use actix_web::{delete, get, options, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::connect;
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
 use crate::api::resource::product_resource::{ProductResource, ProductsResource};
+use serde_qs::actix::QsQuery;
 
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(options_products);
-    cfg.service(options_product);
     cfg.service(get_products);
     cfg.service(get_product);
     cfg.service(create_product);
@@ -19,13 +18,8 @@ pub fn config(cfg: &mut ServiceConfig) {
 
 // TODO: check if controller methods need to start their own transactions
 
-#[options("/products")]
-async fn options_products() -> impl Responder { HttpResponse::Ok().finish() }
-#[options("/products/{id}")]
-async fn options_product() -> impl Responder { HttpResponse::Ok().finish() }
-
 #[get("/products")]
-async fn get_products(pagination: Option<web::Query<Pagination>>, req: HttpRequest) -> impl Responder {
+async fn get_products(pagination: Option<QsQuery<Pagination>>, req: HttpRequest) -> impl Responder {
     let extensions = req.extensions();
     // TODO: remove unwrap
     let auth_user = extensions.get::<AuthUser>().unwrap();

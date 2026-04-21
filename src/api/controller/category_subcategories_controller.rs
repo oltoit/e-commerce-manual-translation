@@ -1,4 +1,4 @@
-use actix_web::{delete, get, options, post, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::connect;
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
@@ -6,18 +6,10 @@ use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_subcategories_service;
 
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(options_subcategories);
-    cfg.service(options_subcategory);
     cfg.service(get_subcategories);
     cfg.service(create_subcategory);
     cfg.service(delete_subcategory);
 }
-
-#[options("/categories/{id}/subcategories")]
-async fn options_subcategories() -> impl Responder { HttpResponse::Ok().finish() }
-
-#[options("/categories/{id}/subcategories/{childid}")]
-async fn options_subcategory() -> impl Responder { HttpResponse::Ok().finish() }
 
 #[get("/categories/{id}/subcategories")]
 async fn get_subcategories(path: web::Path<i64>, req: HttpRequest) -> impl Responder {
@@ -31,7 +23,10 @@ async fn get_subcategories(path: web::Path<i64>, req: HttpRequest) -> impl Respo
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resources = result.iter().map(|r| CategoryResource::from_entity(&mut connection, r)).collect::<Vec<CategoryResource>>();
+    let resources = match CategoryResource::map_from_entities(&mut connection, auth_user, &result) {
+        Ok(resources) => resources,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Ok().json(&resources)
 }
 
@@ -47,7 +42,10 @@ async fn create_subcategory(path: web::Path<(i64, i64)>, req: HttpRequest) -> im
         Err(e) => return e.get_response(req.match_info().as_str())
     };
 
-    let resource = CategoryResourceHal::from_entity(&mut connection, &result);
+    let resource = match CategoryResourceHal::from_entity(&mut connection, auth_user, &result) {
+        Ok(resource) => resource,
+        Err(e) => return e.get_response(req.match_info().as_str())
+    };
     HttpResponse::Created().json(&resource)
 }
 

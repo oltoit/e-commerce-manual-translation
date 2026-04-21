@@ -55,7 +55,7 @@ impl ProductResource {
     pub fn from_product(connection: &mut PgConnection, auth_user: &AuthUser, product: &ProductWithUser) -> Result<Self, ErrorsEnum> {
         let categories = match category_service::get_category_for_product(connection, auth_user, product.product.id) {
             Ok(categories) => Some(categories.iter().map(|c|
-                CategoryResourceHal::from_entity(connection, c)).collect::<Vec<CategoryResourceHal>>()
+                CategoryResourceHal::from_entity(connection, auth_user, c)).collect::<Result<Vec<CategoryResourceHal>, ErrorsEnum>>()?
             ),
             Err(_) => return Err(ErrorsEnum::NotFound(PRODUCT_NOT_FOUND_MSG.to_string()))
         };

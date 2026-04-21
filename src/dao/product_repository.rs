@@ -20,10 +20,15 @@ pub fn get_all_products(connection: &mut PgConnection, pagination: &Pagination) 
         .limit(pagination.get_size()), pagination.get_page() * pagination.get_size())
         .into_boxed();
 
-    let order = match ProductSort::from_str(pagination.get_unsanitized_sort()) {
-        Ok(sort) => sort.apply_to_query(query),
+    let sorts = match ProductSort::from_str_vec(pagination.get_unsanitized_sorts()) {
+        Ok(sorts) => sorts,
         Err(_) => return Err(diesel::result::Error::NotFound),
     };
+
+    let mut order = query;
+    for sort in sorts {
+        order = sort.apply_to_query(order);
+    }
 
     order.get_results(connection)
 }
@@ -32,16 +37,19 @@ pub fn get_all_products_with_user(connection: &mut PgConnection, pagination: &Pa
     use crate::schema::app_product::dsl::app_product;
     let total = app_product.count().get_result::<i64>(connection)?;
 
-    let query = OffsetDsl::offset(app_product
-        .limit(pagination.get_size()), pagination.get_page() * pagination.get_size())
-        .into_boxed();
-
-    let order = match ProductSort::from_str(pagination.get_unsanitized_sort()) {
-        Ok(sort) => sort.apply_to_query(query),
+    let sorts = match ProductSort::from_str_vec(pagination.get_unsanitized_sorts()) {
+        Ok(sorts) => sorts,
         Err(_) => return Err(diesel::result::Error::NotFound),
     };
 
-    let products_with_users = order
+    let mut order = app_product.into_boxed();
+
+    for sort in sorts {
+        order = sort.apply_to_query(order);
+    }
+
+    let products_with_users = OffsetDsl::offset(order
+        .limit(pagination.get_size()), pagination.get_size() * pagination.get_page())
         .inner_join(app_user::table)
         .select((Product::as_select(), User::as_select()))
         .get_results::<(Product, User)>(connection)?
