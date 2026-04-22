@@ -12,25 +12,23 @@ use crate::schema::app_product::id;
 use crate::schema::app_product_category::{productid};
 use crate::schema::app_product_category::dsl::app_product_category;
 use crate::schema::app_user;
-// TODO: add pagination to all endpoints that need it
 
 pub fn get_all_products(connection: &mut PgConnection, pagination: &Pagination) -> QueryResult<Vec<Product>> {
     use crate::schema::app_product::dsl::app_product;
-    let query = OffsetDsl::offset(app_product
-        .limit(pagination.get_size()), pagination.get_page() * pagination.get_size())
-        .into_boxed();
 
     let sorts = match ProductSort::from_str_vec(pagination.get_unsanitized_sorts()) {
         Ok(sorts) => sorts,
         Err(_) => return Err(diesel::result::Error::NotFound),
     };
 
-    let mut order = query;
+    let mut order = app_product.into_boxed();
     for sort in sorts {
         order = sort.apply_to_query(order);
     }
 
-    order.get_results(connection)
+    OffsetDsl::offset(order
+        .limit(pagination.get_page()), pagination.get_page() * pagination.get_size())
+        .get_results(connection)
 }
 
 pub fn get_all_products_with_user(connection: &mut PgConnection, pagination: &Pagination) -> QueryResult<(Vec<ProductWithUser>, i64)> {
@@ -43,7 +41,6 @@ pub fn get_all_products_with_user(connection: &mut PgConnection, pagination: &Pa
     };
 
     let mut order = app_product.into_boxed();
-
     for sort in sorts {
         order = sort.apply_to_query(order);
     }

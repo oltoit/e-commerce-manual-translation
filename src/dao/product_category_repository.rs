@@ -10,12 +10,11 @@ use crate::schema::app_product::dsl::app_product;
 use crate::schema::app_product_category::{categoryid, productid};
 
 // TODO: refactor this query to be simpler!!!
-// TODO: test if this actually works
 /// Query taken directly from source-application
 pub fn get_all_products_for_categories_recursive(connection: &mut PgConnection, pagination: &Pagination, category_id: i64) -> QueryResult<(Vec<Product>, i64)> {
     let limit = pagination.get_size();
     let offset = pagination.get_page() * limit;
-    let sort = match ProductSort::from_str_vec(pagination.get_unsanitized_sorts()) {
+    let sort = match ProductSort::from_str_vec_product_category(pagination.get_unsanitized_sorts()) {
         Ok(sort) => sort,
         Err(_) => return Err(diesel::result::Error::NotFound)
     };

@@ -98,12 +98,12 @@ impl FieldOptions {
             _ => None,
         }
     }
-    fn to_string(&self) -> String {
+    fn to_sql_fields(&self) -> String {
         match self {
             FieldOptions::Id => "id".to_string(),
             FieldOptions::Name => "name".to_string(),
             FieldOptions::Price => "price".to_string(),
-            FieldOptions::User => "user".to_string(),
+            FieldOptions::User => "userid".to_string(),
         }
     }
 }
@@ -122,7 +122,18 @@ impl ProductSort {
         }
     }
 
+    /// In product-controller 'user' is the valid way to sort for user.
+    /// This is the default option and should be chosen in most scenarios.
     pub fn from_str_vec(sorts: Vec<&str>) -> Result<Vec<Self>, ErrorsEnum> {
+        Self::from_str_internal(sorts, validate_field_where_user_valid)
+    }
+
+    /// In category-products-controller 'userid' is the valid way to sort for user.
+    pub fn from_str_vec_product_category(sorts: Vec<&str>) -> Result<Vec<Self>, ErrorsEnum> {
+        Self::from_str_internal(sorts, validate_field_where_userid_valid)
+    }
+
+    fn from_str_internal(sorts: Vec<&str>, validate_function: fn(&str) -> Result<FieldOptions, ErrorsEnum>) -> Result<Vec<Self>, ErrorsEnum> {
         let mut product_sorts = Vec::with_capacity(sorts.len());
 
         for sort in sorts {
@@ -130,7 +141,7 @@ impl ProductSort {
             let field = split.next().unwrap_or(DEFAULT_SORT_FIELD).to_string();
             let order = split.next().unwrap_or(DEFAULT_SORT_ORDER).to_string();
 
-            let field = validate_field(&field)?;
+            let field = validate_function(&field)?;
             let order = validate_order(&order)?;
 
             product_sorts.push(ProductSort { field, order });
@@ -144,7 +155,7 @@ pub fn product_sorts_to_sql_string(sorts: Vec<ProductSort>) -> String {
     let mut sql_string = String::new();
 
     for sort in sorts {
-        sql_string.push_str(&format!("{} {}, ", sort.field.to_string(), sort.order.to_string()));
+        sql_string.push_str(&format!("{} {}, ", sort.field.to_sql_fields(), sort.order.to_string()));
     }
 
     // trim last comma since sql will fail if it's still there
@@ -155,12 +166,26 @@ pub fn product_sorts_to_sql_string(sorts: Vec<ProductSort>) -> String {
     sql_string
 }
 
-fn validate_field(field: &str) -> Result<FieldOptions, ErrorsEnum> {
+fn validate_field_where_user_valid(field: &str) -> Result<FieldOptions, ErrorsEnum> {
     match FieldOptions::from_str(field) {
         Some(field) => Ok(field),
         None => Err(ErrorsEnum::NoPropertyError(format!("no field '{}' found", field))),
     }
 }
+
+fn validate_field_where_userid_valid(field: &str) -> Result<FieldOptions, ErrorsEnum> {
+    let field = match field {
+        "userid" => "user",
+        "user" => return Err(ErrorsEnum::NoPropertyError(format!("no field '{}' found", field))),
+        _ => field,
+    };
+
+    match FieldOptions::from_str(field) {
+        Some(field) => Ok(field),
+        None => Err(ErrorsEnum::NoPropertyError(format!("no field '{}' found", field))),
+    }
+}
+
 fn validate_order(order: &str) -> Result<OrderOptions, ErrorsEnum> {
     match OrderOptions::from_str(order) {
         Some(order) => Ok(order),
