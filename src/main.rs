@@ -2,7 +2,7 @@ use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web::error::{InternalError, JsonPayloadError};
 use actix_web::http::Method;
 use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
-use e_commerce_manual_translation::config::env_loader::{set_loader, LOADER};
+use e_commerce_manual_translation::config::env_loader::{get_loader, set_loader};
 use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
 use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
 
@@ -10,7 +10,6 @@ use e_commerce_manual_translation::security::auth_context_holder::AuthContextHol
 async fn main() -> std::io::Result<()> {
     set_loader()?;
 
-    // TODO: add configurations
     HttpServer::new(|| {
         App::new()
             .app_data(
@@ -30,8 +29,7 @@ async fn main() -> std::io::Result<()> {
                 default_handler(req)
             }))
     })
-    // FIXME: remove unwrap
-    .bind(LOADER.get().unwrap().get_address())?
+    .bind(get_adress()?)?
     .run()
     .await
 }
@@ -39,6 +37,13 @@ async fn main() -> std::io::Result<()> {
 fn handle_json_error(err: JsonPayloadError, req: &HttpRequest) -> InternalError<JsonPayloadError> {
     let msg = err.to_string();
     InternalError::from_response(err, ErrorsEnum::JsonParsingError(msg).get_response(req.path()))
+}
+
+fn get_adress() -> Result<String, std::io::Error> {
+    match get_loader() {
+        Ok(loader) => Ok(loader.get_address()),
+        Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "error loading env variables")),
+    }
 }
 
 fn default_handler(req: HttpRequest) -> impl Responder {

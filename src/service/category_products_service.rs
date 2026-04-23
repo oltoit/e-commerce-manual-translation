@@ -18,17 +18,6 @@ pub fn get_products_for_category(connection: &mut PgConnection, auth_user: &Auth
             Err(_) => return Err(ErrorsEnum::DieselError("error getting products for category".to_string()))
         };
 
-        let products = match products.iter().map(|product| {
-            match user_repository::get_by_id(conn, product.userid) {
-                // TODO: consider finding a better solution that to clone
-                Ok(user) => Ok(ProductWithUser::from(product.clone(), user)),
-                Err(_) => Err(ErrorsEnum::NotFound(USER_NOT_FOUND_MSG.to_string()))
-            }
-        }).collect::<Result<Vec<ProductWithUser>, ErrorsEnum>>() {
-            Ok(products) => products,
-            Err(e) => return Err(e)
-        };
-
         Ok((products, total_elements))
     })
 }

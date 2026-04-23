@@ -2,7 +2,7 @@ use diesel::PgConnection;
 use validator::Validate;
 use crate::api::dto::auth_dto::LoginRequest;
 use crate::dao::user_repository;
-use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG};
+use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
 use crate::security::jwt_handler::generate_token;
 use crate::security::role::Role;
 
@@ -22,7 +22,7 @@ pub fn authenticate(connection: &mut PgConnection, login_request: LoginRequest) 
 
         match generate_token(user.id, user.username, user_role) {
             Ok(token) => Ok(token),
-            Err(_) => Err(ErrorsEnum::TokenParsing("Error parsing the token".to_string())),
+            Err(_) => Err(ErrorsEnum::TokenError(TOKEN_PARSING_ERROR_MSG.to_string())),
         }
     } else {
         Err(ErrorsEnum::WrongCredentials)

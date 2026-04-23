@@ -45,8 +45,8 @@ impl Pagination {
 }
 
 pub fn get_optional_pagination(pagination: Option<QsQuery<Pagination>>) -> Pagination {
-    if pagination.is_some() {
-        pagination.unwrap().into_inner()
+    if let Some(pagination) = pagination {
+        pagination.into_inner()
     } else {
         Pagination::default()
     }

@@ -11,11 +11,10 @@ pub struct ErrorResponseBody<'a> {
     path: &'a str,
 }
 
-// TODO: timestamp format isn't exactly like the target-application -> fix this at some point
 impl<'a> ErrorResponseBody<'a> {
     pub fn new(status: u16, error: &'a str, message: &'a str, path: &'a str) -> Self {
         let now: DateTime<Utc> = SystemTime::now().into();
-        let timestamp = now.to_rfc3339();
+        let timestamp = now.format("%Y-%m-%dT%H:%M:%S%.3f%z").to_string();
 
         ErrorResponseBody {
             timestamp,

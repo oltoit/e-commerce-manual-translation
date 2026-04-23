@@ -3,7 +3,7 @@ use serde::Serialize;
 use crate::api::controller::pagination::Pagination;
 use crate::api::resource::category_resource::CategoryResourceHal;
 use crate::api::resource::relation::{HalLink, Relation};
-use crate::config::env_loader::LOADER;
+use crate::config::env_loader::get_loader;
 use crate::entity::product::{Product, ProductWithUser};
 use crate::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
 use crate::security::auth_context_holder::AuthUser;
@@ -27,7 +27,7 @@ impl ProductsResource {
             Err(e) => return Err(e)
         };
 
-        let links = ProductsHalLinks::new(page);
+        let links = ProductsHalLinks::new(page)?;
         let page = Page::new(page, total_elements);
 
         Ok (ProductsResource {embedded: ProductResourceList { product_resource_list: embedded }, links, page})
@@ -69,15 +69,15 @@ impl ProductResource {
                 }, None => None
             },
             owner: product.user.username.to_string(),
-            links: ProductHalLinks::from_product(&product.product),
+            links: ProductHalLinks::from_product(&product.product)?,
         })
     }
 }
 
-fn get_self_link(product: &Product) -> Relation {
+fn get_self_link(product: &Product) -> Result<Relation, ErrorsEnum> {
     let rel = "self".to_string();
-    let href = String::from(format!("{}/products/{}", LOADER.get().unwrap().get_base_url(), product.id));
-    Relation { rel, href }
+    let href = String::from(format!("{}/products/{}", get_loader()?.get_base_url(), product.id));
+    Ok(Relation { rel, href })
 }
 
 #[derive(Serialize)]
@@ -86,20 +86,20 @@ struct ProductHalLinks {
     self_link: HalLink,
 }
 impl ProductHalLinks {
-    fn from_product(product: &Product) -> Self {
-        Self { self_link: HalLink { href: get_self_link(product).href} }
+    fn from_product(product: &Product) -> Result<Self, ErrorsEnum> {
+        Ok(Self { self_link: HalLink { href: get_self_link(product)?.href} })
     }
 }
 
-fn get_paginated_self_link(pagination: &Pagination) -> Relation {
+fn get_paginated_self_link(pagination: &Pagination) -> Result<Relation, ErrorsEnum> {
     let rel = "self".to_string();
     let href = String::from(format!(
         "{}/products?page={}&size={}",
-        LOADER.get().unwrap().get_base_url(),
+        get_loader()?.get_base_url(),
         pagination.get_page(),
         pagination.get_size()
     ));
-    Relation { rel, href }
+    Ok(Relation { rel, href })
 }
 
 #[derive(Serialize)]
@@ -108,8 +108,8 @@ struct ProductsHalLinks {
     self_link: HalLink,
 }
 impl ProductsHalLinks {
-    fn new(pagination: &Pagination) -> Self {
-        Self { self_link: HalLink { href: get_paginated_self_link(pagination).href} }
+    fn new(pagination: &Pagination) -> Result<Self, ErrorsEnum> {
+        Ok(Self { self_link: HalLink { href: get_paginated_self_link(pagination)?.href} })
     }
 }
 

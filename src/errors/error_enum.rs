@@ -1,12 +1,9 @@
 use actix_web::HttpResponse;
 use crate::errors::error_response_body::ErrorResponseBody;
 
-// TODO: probably refactor all of these errors into their own errors that implement actix::ResponseError
-
 pub enum ErrorsEnum {
     WrongCredentials,
-    TokenParsing(String),
-    TokenGenerationError(String),
+    TokenError(String),
     NotFound(String),
     Forbidden,
     CreationError(String),
@@ -22,7 +19,8 @@ pub enum ErrorsEnum {
     ClientError,
     FixerApiError,
     WrongCurrency(String),
-    ProductCategoryError(String)
+    ProductCategoryError(String),
+    DatabaseError(String),
 }
 
 impl From<diesel::result::Error> for ErrorsEnum {
@@ -47,11 +45,7 @@ impl ErrorsEnum {
                 HttpResponse::Forbidden().json(
                     ErrorResponseBody::forbidden(path)
                 ),
-            ErrorsEnum::TokenParsing(msg) =>
-                HttpResponse::InternalServerError().json(
-                    ErrorResponseBody::internal_server_error(path, msg)
-                ),
-            ErrorsEnum::TokenGenerationError(msg) =>
+            ErrorsEnum::TokenError(msg) =>
                 HttpResponse::InternalServerError().json(
                     ErrorResponseBody::internal_server_error(path, msg)
                 ),
@@ -118,7 +112,11 @@ impl ErrorsEnum {
             ErrorsEnum::ProductCategoryError(msg) =>
                 HttpResponse::BadRequest().json(
                     ErrorResponseBody::bad_request(path, msg)
-                )
+                ),
+            ErrorsEnum::DatabaseError(msg) =>
+                HttpResponse::InternalServerError().json(
+                    ErrorResponseBody::internal_server_error(path, msg)
+                ),
         }
     }
 }

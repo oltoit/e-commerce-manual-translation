@@ -1,17 +1,13 @@
 use std::collections::HashMap;
 use reqwest::Client;
 use serde::Deserialize;
-use crate::config::env_loader::LOADER;
+use crate::config::env_loader::get_loader;
 use crate::errors::error_enum::ErrorsEnum;
 
 pub const SRC_CURRENCY: &str = "EUR";
 
 pub async fn convert_currency_to_euro(currency: &str, amount: f64) -> Result<f64, ErrorsEnum> {
-    let api_url = match LOADER.get() {
-        Some(loader) => loader.get_fixer_address(),
-        None => return Err(ErrorsEnum::EnvLoaderError("environment could not be retrieved".to_string()))
-    };
-
+    let api_url = get_loader()?.get_fixer_address();
     let response = match Client::new().get(api_url).send().await {
         Ok(response) => response,
         Err(_) => return Err(ErrorsEnum::FixerApiError)

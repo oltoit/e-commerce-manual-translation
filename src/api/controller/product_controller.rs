@@ -1,6 +1,6 @@
 use crate::service::product_service;
 use crate::security::auth_context_holder::AuthUser;
-use actix_web::{delete, get, post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::connect;
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
@@ -16,24 +16,27 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(delete_product);
 }
 
-// TODO: check if controller methods need to start their own transactions
-
 #[get("/products")]
 async fn get_products(pagination: Option<QsQuery<Pagination>>, req: HttpRequest) -> impl Responder {
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
     let pagination = get_optional_pagination(pagination);
-    let mut connection = connect();
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let (result, total_elements) = match product_service::get_products_with_users(&mut connection, &auth_user, &pagination) {
         Ok(result) => result,
-        Err(e) => return e.get_response(req.match_info().as_str()),
+        Err(e) => return e.get_response(path),
     };
 
-    let resource = match ProductsResource::new(&mut connection, auth_user, &result, &pagination, total_elements) {
+    let resource = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination, total_elements) {
         Ok(resource) => resource,
-        Err(e) => return e.get_response(req.match_info().as_str()),
+        Err(e) => return e.get_response(path),
     };
     HttpResponse::Ok().json(resource)
 }
@@ -42,10 +45,14 @@ async fn get_products(pagination: Option<QsQuery<Pagination>>, req: HttpRequest)
 async fn get_product(path: web::Path<i64>, req: HttpRequest) -> impl Responder {
     let id = path.into_inner();
     let path = req.match_info().as_str();
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
-    let mut connection = connect();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let result = match product_service::get_product_with_user_by_id(&mut connection, &auth_user, id) {
         Ok(product) => product,
@@ -61,19 +68,24 @@ async fn get_product(path: web::Path<i64>, req: HttpRequest) -> impl Responder {
 
 #[post("/products")]
 async fn create_product(req: HttpRequest, new_category: web::Json<CreateProductDto>) -> impl Responder {
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
-    let mut connection = connect();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let result = match product_service::create_product(&mut connection, &auth_user, new_category.into_inner()).await {
         Ok(product) => product,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
 
     let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
     HttpResponse::Created().json(&resource)
 }
@@ -82,10 +94,14 @@ async fn create_product(req: HttpRequest, new_category: web::Json<CreateProductD
 async fn update_product(req: HttpRequest, path: web::Path<i64>, new_product: web::Json<UpdateProductDto>) -> impl Responder {
     let id = path.into_inner();
     let path = req.match_info().as_str();
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
-    let mut connection = connect();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let result = match product_service::update_product(&mut connection, &auth_user, new_product.into_inner(), id).await {
         Ok(product) => product,
@@ -102,13 +118,18 @@ async fn update_product(req: HttpRequest, path: web::Path<i64>, new_product: web
 #[delete("/products/{id}")]
 async fn delete_product(req: HttpRequest, path: web::Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
-    let mut connection = connect();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     match product_service::delete_product(&mut connection, &auth_user, id) {
         Ok(_) => HttpResponse::NoContent().finish(),
-        Err(e) => e.get_response(req.match_info().as_str())
+        Err(e) => e.get_response(path)
     }
 }

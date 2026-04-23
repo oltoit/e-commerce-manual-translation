@@ -1,8 +1,8 @@
 use diesel::{Connection, PgConnection};
-use crate::config::env_loader::LOADER;
+use crate::config::env_loader::get_loader;
+use crate::errors::error_enum::ErrorsEnum;
 
-pub fn connect() -> PgConnection {
-    // FIXME: remove unwrap
-    let database_url = LOADER.get().unwrap().get_database_url();
-    PgConnection::establish(&database_url).unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+pub fn connect() -> Result<PgConnection, ErrorsEnum> {
+    let database_url = get_loader()?.get_database_url();
+    PgConnection::establish(&database_url).map_err(|_| ErrorsEnum::DatabaseError("Could not connect to database".to_string()))
 }

@@ -8,13 +8,6 @@ pub enum Role {
     RoleAdmin = 2,
 }
 
-impl std::fmt::Display for Role {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // FIXME: remove unwrap
-        write!(f, "{}", serde_json::to_string(self).unwrap())
-    }
-}
-
 impl Role {
     pub fn from_str(role: &str) -> Option<Role> {
         match role {

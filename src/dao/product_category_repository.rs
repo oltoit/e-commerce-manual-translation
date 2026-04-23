@@ -1,26 +1,28 @@
 use diesel::prelude::*;
 use diesel::{sql_query, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
+use diesel::result::Error;
 use diesel::sql_types::BigInt;
 use crate::api::controller::pagination::Pagination;
-use crate::entity::category::Category;
-use crate::entity::product::{product_sorts_to_sql_string, Product, ProductSort};
+use crate::entity::product::{product_sorts_to_sql_string, Product, ProductSort, ProductWithUser};
 use crate::entity::product_category_relation::ProductCategoryRelation;
-use crate::schema::{app_category, app_product_category};
+use crate::entity::user::User;
+use crate::schema::app_product_category;
 use crate::schema::app_product::dsl::app_product;
 use crate::schema::app_product_category::{categoryid, productid};
+use crate::schema::app_user::dsl::app_user;
+use crate::schema::app_user::id;
 
-// TODO: refactor this query to be simpler!!!
 /// Query taken directly from source-application
-pub fn get_all_products_for_categories_recursive(connection: &mut PgConnection, pagination: &Pagination, category_id: i64) -> QueryResult<(Vec<Product>, i64)> {
+pub fn get_all_products_for_categories_recursive(connection: &mut PgConnection, pagination: &Pagination, category_id: i64) -> QueryResult<(Vec<ProductWithUser>, i64)> {
     let limit = pagination.get_size();
     let offset = pagination.get_page() * limit;
     let sort = match ProductSort::from_str_vec_product_category(pagination.get_unsanitized_sorts()) {
         Ok(sort) => sort,
-        Err(_) => return Err(diesel::result::Error::NotFound)
+        Err(_) => return Err(Error::NotFound)
     };
     let sort = product_sorts_to_sql_string(sort);
 
-    let result = sql_query(format!("\
+    let products: Vec<Product> = sql_query(format!("\
         select p.* from app_product p \
         inner join app_product_category pc on p.id = pc.productid \
         where (\
@@ -41,19 +43,15 @@ pub fn get_all_products_for_categories_recursive(connection: &mut PgConnection, 
     .bind::<BigInt, _>(limit)
     .load(connection)?;
 
+    let users = app_user.filter(id.eq_any(products.iter().map(|p| p.userid).collect::<Vec<i64>>())).load::<User>(connection)?;
+    let result = products.into_iter().map(|p| {
+        let user = users.iter().find(|u| u.id == p.userid).ok_or(Error::NotFound)?.clone();
+        Ok(ProductWithUser::from(p, user))
+    }).collect::<Result<Vec<ProductWithUser>, Error>>()?;
+
     let total = app_product.count().get_result::<i64>(connection)?;
 
     Ok((result, total))
-}
-
-pub fn get_all_categories_for_product(connection: &mut PgConnection, product_id: i64) -> QueryResult<Vec<Category>> {
-    use crate::schema::app_product_category::dsl::app_product_category;
-
-    app_product_category
-        .filter(productid.eq(product_id))
-        .inner_join(app_category::table)
-        .select(Category::as_select())
-        .get_results(connection)
 }
 
 /// returns error if product is not associated with category

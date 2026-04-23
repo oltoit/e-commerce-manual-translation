@@ -1,5 +1,5 @@
 use crate::service::category_products_service;
-use actix_web::{delete, get, post, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use serde_qs::actix::QsQuery;
 use crate::api::controller::connect::connect;
@@ -15,56 +15,71 @@ pub fn config(cfg: &mut ServiceConfig) {
 
 #[get("/categories/{categoryid}/products")]
 async fn get_products_for_category(pagination: Option<QsQuery<Pagination>>, path: web::Path<i64>, req: HttpRequest) -> impl Responder {
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
     let category_id = path.into_inner();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
     let pagination = get_optional_pagination(pagination);
-    let mut connection = connect();
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let (result, total_elements) = match category_products_service::get_products_for_category(&mut connection, &auth_user, &pagination, category_id) {
         Ok(products) => products,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
 
-    let resources = match ProductsResource::new(&mut connection, auth_user, &result, &pagination, total_elements) {
+    let resources = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination, total_elements) {
         Ok(resources) => resources,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
     HttpResponse::Ok().json(resources)
 }
 
 #[post("/categories/{categoryid}/products/{productid}")]
 async fn add_product_to_category(path: web::Path<(i64, i64)>, req: HttpRequest) -> impl Responder {
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
     let (category_id, product_id) = path.into_inner();
-    let mut connection = connect();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     let result = match category_products_service::add_product_to_category(&mut connection, &auth_user, category_id, product_id) {
         Ok(product) => product,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
 
-    let resource = match ProductResource::from_product(&mut connection, auth_user, &result) {
+    let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
     HttpResponse::Created().json(resource)
 }
 
 #[delete("/categories/{categoryid}/products/{productid}")]
 async fn remove_product_from_category(path: web::Path<(i64, i64)>, req: HttpRequest) -> impl Responder {
-    let extensions = req.extensions();
-    // TODO: remove unwrap
-    let auth_user = extensions.get::<AuthUser>().unwrap();
     let (category_id, product_id) = path.into_inner();
-    let mut connection = connect();
+    let path = req.match_info().as_str();
+    let auth_user = match AuthUser::get(&req) {
+        Ok(user) => user,
+        Err(e) => return e.get_response(path)
+    };
+    let mut connection = match connect() {
+        Ok(conn) => conn,
+        Err(e) => return e.get_response(path)
+    };
 
     match category_products_service::remove_product_from_category(&mut connection, &auth_user, category_id, product_id) {
         Ok(product) => product,
-        Err(e) => return e.get_response(req.match_info().as_str())
+        Err(e) => return e.get_response(path)
     };
     HttpResponse::NoContent().finish()
 }

@@ -11,6 +11,13 @@ pub struct Category{
     pub parentid: Option<i64>,
 }
 
+#[derive(QueryableByName)]
+#[diesel(table_name = crate::schema::app_category)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct CategoryId{
+    pub id: i64,
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::app_category)]
 #[diesel(check_for_backend(diesel::pg::Pg))]

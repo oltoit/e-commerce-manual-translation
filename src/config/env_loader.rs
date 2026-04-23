@@ -1,5 +1,6 @@
 use std::error::Error;
 use once_cell::sync::OnceCell;
+use crate::errors::error_enum::ErrorsEnum;
 
 pub struct EnvLoader {
     url: String,
@@ -48,7 +49,14 @@ impl EnvLoader {
 /// Global env loader
 /// Is set once in the main function
 /// If setting it fails the programm should terminate
-pub static LOADER: OnceCell<EnvLoader> = OnceCell::new();
+static LOADER: OnceCell<EnvLoader> = OnceCell::new();
+const ENV_LOADER_ERR_MSG: &str = "Environment could not be loaded";
+pub fn get_loader() -> Result<&'static EnvLoader, ErrorsEnum> {
+    match LOADER.get() {
+        Some(loader) => Ok(loader),
+        None => Err(ErrorsEnum::EnvLoaderError(ENV_LOADER_ERR_MSG.to_string()))
+    }
+}
 
 pub fn set_loader() -> std::io::Result<()> {
     match EnvLoader::from_env() {
