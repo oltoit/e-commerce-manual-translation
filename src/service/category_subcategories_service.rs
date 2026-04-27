@@ -28,7 +28,7 @@ pub fn add_subcategory_to_category(connection: &mut PgConnection, auth_user: &Au
         };
 
         if subcategory.parentid.is_some_and(|parent| parent == parent_category.id) {
-            return Err(ErrorsEnum::CategoriesAlreadyAssociated(format!("category {} already contains subcategory {}", category_id, subcategory_id )));
+            return Err(ErrorsEnum::CategoryAssociationError(format!("category {} already contains subcategory {}", category_id, subcategory_id )));
         };
 
         let mut updated_category = UpdateCategory::from_category(&subcategory);
@@ -58,7 +58,7 @@ pub fn delete_subcategory_from_category(connection: &mut PgConnection, auth_user
         };
 
         if subcategory.parentid.is_none_or(|parent| parent != parent_category.id) {
-            return Err(ErrorsEnum::CategoriesAlreadyAssociated(format!("category {} does not contain subcategory {}", category_id, subcategory_id )));
+            return Err(ErrorsEnum::CategoryAssociationError(format!("category {} does not contain subcategory {}", category_id, subcategory_id )));
         };
 
         let mut updated_category = UpdateCategory::from_category(&subcategory);

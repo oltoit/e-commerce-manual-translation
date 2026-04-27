@@ -1,6 +1,8 @@
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Logger};
 use actix_web::error::{InternalError, JsonPayloadError};
 use actix_web::http::Method;
+use env_logger::Env;
+use log::warn;
 use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
 use e_commerce_manual_translation::config::env_loader::{get_loader, set_loader};
 use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
@@ -10,8 +12,11 @@ use e_commerce_manual_translation::security::auth_context_holder::AuthContextHol
 async fn main() -> std::io::Result<()> {
     set_loader()?;
 
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+
     HttpServer::new(|| {
         App::new()
+            .wrap(Logger::default())
             .app_data(
                 web::JsonConfig::default().error_handler(|err, req|
                     handle_json_error(err, req).into()
@@ -51,8 +56,10 @@ fn default_handler(req: HttpRequest) -> impl Responder {
         if req.method() == Method::OPTIONS {
             return HttpResponse::Ok().finish();
         }
+        warn!("Method {:?} not allowed on endpoint {}", req.method(), req.path());
         HttpResponse::MethodNotAllowed().finish()
     } else {
+        warn!("Not Handler found for endpoint {}", req.path());
         HttpResponse::ImATeapot().finish()
     }
 }
