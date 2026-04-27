@@ -32,7 +32,7 @@ async fn get_products_for_category(pagination: Option<QsQuery<Pagination>>, path
         Err(e) => return e.get_response(path)
     };
 
-    let resources = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination, total_elements) {
+    let resources = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination,  &req, total_elements) {
         Ok(resources) => resources,
         Err(e) => return e.get_response(path)
     };

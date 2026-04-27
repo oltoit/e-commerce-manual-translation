@@ -1,3 +1,4 @@
+use actix_web::HttpRequest;
 use diesel::PgConnection;
 use serde::Serialize;
 use crate::api::controller::pagination::Pagination;
@@ -12,14 +13,15 @@ use crate::service::category_service;
 #[derive(Serialize)]
 pub struct ProductsResource {
     #[serde(rename = "_embedded")]
-    embedded: ProductResourceList,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    embedded: Option<ProductResourceList>,
     #[serde(rename = "_links")]
     links: ProductsHalLinks,
     page: Page
 }
 
 impl ProductsResource {
-    pub fn new(connection: &mut PgConnection, auth_user: &AuthUser, products: &Vec<ProductWithUser>, page: &Pagination, total_elements: i64) -> Result<Self, ErrorsEnum> {
+    pub fn new(connection: &mut PgConnection, auth_user: &AuthUser, products: &Vec<ProductWithUser>, page: &Pagination, req: &HttpRequest, total_elements: i64) -> Result<Self, ErrorsEnum> {
         let embedded = match products.iter().map(|p| {
             ProductResource::from_product(connection, auth_user, p)
         }).collect::<Result<Vec<ProductResource>, ErrorsEnum>>() {
@@ -27,10 +29,15 @@ impl ProductsResource {
             Err(e) => return Err(e)
         };
 
-        let links = ProductsHalLinks::new(page)?;
+        let embedded = match embedded.len() {
+            0 => None,
+            _ => Some(ProductResourceList { product_resource_list: embedded })
+        };
+
+        let links = ProductsHalLinks::new(req)?;
         let page = Page::new(page, total_elements);
 
-        Ok (ProductsResource {embedded: ProductResourceList { product_resource_list: embedded }, links, page})
+        Ok (ProductsResource {embedded, links, page})
     }
 }
 
@@ -91,13 +98,12 @@ impl ProductHalLinks {
     }
 }
 
-fn get_paginated_self_link(pagination: &Pagination) -> Result<Relation, ErrorsEnum> {
+fn get_paginated_self_link(req: &HttpRequest) -> Result<Relation, ErrorsEnum> {
     let rel = "self".to_string();
     let href = String::from(format!(
-        "{}/products?page={}&size={}",
+        "{}/{}",
         get_loader()?.get_base_url(),
-        pagination.get_page(),
-        pagination.get_size()
+        req.match_info().as_str()
     ));
     Ok(Relation { rel, href })
 }
@@ -108,8 +114,8 @@ struct ProductsHalLinks {
     self_link: HalLink,
 }
 impl ProductsHalLinks {
-    fn new(pagination: &Pagination) -> Result<Self, ErrorsEnum> {
-        Ok(Self { self_link: HalLink { href: get_paginated_self_link(pagination)?.href} })
+    fn new(req: &HttpRequest) -> Result<Self, ErrorsEnum> {
+        Ok(Self { self_link: HalLink { href: get_paginated_self_link(req)?.href} })
     }
 }
 
