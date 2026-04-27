@@ -4,6 +4,7 @@ use actix_web::http::Method;
 use env_logger::Env;
 use log::warn;
 use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
+use e_commerce_manual_translation::api::controller::connect::create_pool;
 use e_commerce_manual_translation::config::env_loader::{get_loader, set_loader};
 use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
 use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
@@ -13,8 +14,9 @@ async fn main() -> std::io::Result<()> {
     set_loader()?;
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
+    let connection_pool = create_pool().map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "error creating connection pool"))?;
 
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .app_data(
@@ -22,6 +24,7 @@ async fn main() -> std::io::Result<()> {
                     handle_json_error(err, req).into()
                 )
             )
+            .app_data(web::Data::new(connection_pool.clone()))
             .configure(authentication_controller::config)
             .service(
                 web::scope("")

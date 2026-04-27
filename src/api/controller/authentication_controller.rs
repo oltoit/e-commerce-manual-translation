@@ -1,6 +1,6 @@
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
-use crate::api::controller::connect::connect;
+use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::dto::auth_dto::{AuthResponse, LoginRequest};
 use crate::service::security_service;
 
@@ -9,12 +9,12 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 #[post("/login")]
-async fn login(payload: web::Json<LoginRequest>, req: HttpRequest) -> impl Responder {
+async fn login(payload: web::Json<LoginRequest>, req: HttpRequest, pool: web::Data<DbPool>) -> impl Responder {
     let data = payload.into_inner();
     let path = req.match_info().as_str();
-    let mut connection = match connect() {
+    let mut connection = match get_connection(pool, path) {
         Ok(conn) => conn,
-        Err(e) => return e.get_response(path)
+        Err(response) => return response
     };
 
     match security_service::authenticate(&mut connection, data) {
