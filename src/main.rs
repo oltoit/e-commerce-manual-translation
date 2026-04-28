@@ -37,7 +37,7 @@ async fn main() -> std::io::Result<()> {
                 default_handler(req)
             }))
     })
-    .bind(get_adress()?)?
+    .bind(get_address()?)?
     .run()
     .await
 }
@@ -47,7 +47,7 @@ fn handle_json_error(err: JsonPayloadError, req: &HttpRequest) -> InternalError<
     InternalError::from_response(err, ErrorsEnum::JsonParsingError(msg).get_response(req.path()))
 }
 
-fn get_adress() -> Result<String, std::io::Error> {
+fn get_address() -> Result<String, std::io::Error> {
     match get_loader() {
         Ok(loader) => Ok(loader.get_address()),
         Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "error loading env variables")),
