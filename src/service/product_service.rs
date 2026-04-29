@@ -1,12 +1,10 @@
 use diesel::{Connection, PgConnection};
-use validator::Validate;
 use crate::api::controller::pagination::Pagination;
-use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
 use crate::outbound::adapter::currency_conversion;
 use crate::outbound::adapter::currency_conversion::SRC_CURRENCY;
 use crate::outbound::dao::product_repository;
 use crate::shared::entity::product::{NewProduct, ProductWithUser, UpdateProduct};
-use crate::shared::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
+use crate::shared::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
 use crate::service::auth_helper::can_mutate_product_by_id;
 use crate::shared::auth::auth_user::AuthUser;
 
@@ -31,18 +29,20 @@ pub fn get_product_with_user_by_id(connection: &mut PgConnection, auth_user: &Au
     }
 }
 
-pub async fn create_product(connection: &mut PgConnection, auth_user: &AuthUser, mut create_product: CreateProductDto) -> Result<ProductWithUser, ErrorsEnum> {
+pub async fn create_product<'a>(
+    connection: &mut PgConnection,
+    auth_user: &AuthUser,
+    mut new_product: NewProduct<'a>,
+    currency: &str
+) -> Result<ProductWithUser, ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
-    if create_product.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
 
-    if create_product.currency != SRC_CURRENCY {
-        create_product.price = currency_conversion::convert_currency_to_euro(
-            create_product.currency.as_str(),
-            create_product.price
+    if currency != SRC_CURRENCY {
+        new_product.price = currency_conversion::convert_currency_to_euro(
+            currency,
+            new_product.price
         ).await?;
     }
-
-    let new_product = NewProduct::from_dto(&create_product, auth_user);
 
     connection.transaction(move |conn| {
         match product_repository::insert_return_with_user(conn, new_product) {
@@ -52,18 +52,21 @@ pub async fn create_product(connection: &mut PgConnection, auth_user: &AuthUser,
     })
 }
 
-pub async fn update_product(connection: &mut PgConnection, auth_user: &AuthUser, mut update_product: UpdateProductDto, product_id: i64) -> Result<ProductWithUser, ErrorsEnum> {
+pub async fn update_product<'a>(
+    connection: &mut PgConnection,
+    auth_user: &AuthUser,
+    mut update_product: UpdateProduct<'a>,
+    currency: &str,
+    product_id: i64
+) -> Result<ProductWithUser, ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
-    if update_product.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
 
-    if update_product.currency != SRC_CURRENCY {
+    if currency != SRC_CURRENCY {
         update_product.price = currency_conversion::convert_currency_to_euro(
-            update_product.currency.as_str(),
+            currency,
             update_product.price
         ).await?;
     }
-
-    let update_product = UpdateProduct::from_dto(&update_product, auth_user);
 
     connection.transaction(move |conn| {
         if !can_mutate_product_by_id(conn, auth_user, product_id)? {

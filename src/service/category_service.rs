@@ -1,10 +1,8 @@
 use diesel::{Connection, PgConnection};
-use validator::Validate;
-use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::outbound::dao::{category_repository, product_repository};
 use crate::shared::auth::auth_user::AuthUser;
 use crate::shared::entity::category::{Category, NewCategory, UpdateCategory};
-use crate::shared::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
+use crate::shared::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, PRODUCT_NOT_FOUND_MSG};
 
 
 pub fn get_categories(connection: &mut PgConnection, auth_user: &AuthUser) -> Result<Vec<Category>, ErrorsEnum> {
@@ -29,11 +27,8 @@ pub fn get_category_by_id(connection: &mut PgConnection, auth_user: &AuthUser, c
     }
 }
 
-pub fn create_category(connection: &mut PgConnection, auth_user: &AuthUser, create_category: CreateCategoryDto) -> Result<Category, ErrorsEnum> {
+pub fn create_category(connection: &mut PgConnection, auth_user: &AuthUser, new_category: NewCategory) -> Result<Category, ErrorsEnum> {
     if !auth_user.role.has_admin_permission() { return Err(ErrorsEnum::Forbidden); }
-    if create_category.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
-
-    let new_category = NewCategory::from(&create_category);
 
     connection.transaction(move |conn| {
         match category_repository::insert(conn, new_category) {
@@ -43,11 +38,8 @@ pub fn create_category(connection: &mut PgConnection, auth_user: &AuthUser, crea
     })
 }
 
-pub fn update_category(connection: &mut PgConnection, auth_user: &AuthUser, category_id: i64, update_category: UpdateCategoryDto) -> Result<Category, ErrorsEnum> {
+pub fn update_category(connection: &mut PgConnection, auth_user: &AuthUser, category_id: i64, update_category: UpdateCategory) -> Result<Category, ErrorsEnum> {
     if !auth_user.role.has_admin_permission() { return Err(ErrorsEnum::Forbidden); }
-    if update_category.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
-
-    let update_category = UpdateCategory::from(&update_category);
 
     connection.transaction(move |conn| {
         match category_repository::get_by_id(conn, category_id) {

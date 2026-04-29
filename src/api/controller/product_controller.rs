@@ -4,9 +4,11 @@ use actix_web::web::ServiceConfig;
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
 use serde_qs::actix::QsQuery;
+use validator::Validate;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::service::resource_mapper::product_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
+use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_products);
@@ -67,18 +69,30 @@ async fn get_product(path: web::Path<i64>, pool: web::Data<DbPool>, req: HttpReq
 }
 
 #[post("/products")]
-async fn create_product(req: HttpRequest, pool: web::Data<DbPool>, new_category: web::Json<CreateProductDto>) -> impl Responder {
+async fn create_product(req: HttpRequest, pool: web::Data<DbPool>, create_product: web::Json<CreateProductDto>) -> impl Responder {
     let path = req.match_info().as_str();
     let auth_user = match AuthUser::get(&req) {
         Ok(user) => user,
         Err(e) => return e.get_response(path)
     };
+    let create_product = create_product.into_inner();
+    match create_product.validate() {
+        Ok(_) => (),
+        Err(e) => return ErrorsEnum::DTONotValid(e.to_string()).get_response(path)
+    };
+    let new_product = create_product.to_new_product(auth_user.id);
+
     let mut connection = match get_connection(pool, path) {
         Ok(conn) => conn,
         Err(response) => return response
     };
 
-    let result = match product_service::create_product(&mut connection, &auth_user, new_category.into_inner()).await {
+    let result = match product_service::create_product(
+        &mut connection,
+        &auth_user,
+        new_product,
+        create_product.currency.as_str()
+    ).await {
         Ok(product) => product,
         Err(e) => return e.get_response(path)
     };
@@ -91,19 +105,31 @@ async fn create_product(req: HttpRequest, pool: web::Data<DbPool>, new_category:
 }
 
 #[put("/products/{id}")]
-async fn update_product(req: HttpRequest, path: web::Path<i64>, pool: web::Data<DbPool>, new_product: web::Json<UpdateProductDto>) -> impl Responder {
+async fn update_product(req: HttpRequest, path: web::Path<i64>, pool: web::Data<DbPool>, update_product: web::Json<UpdateProductDto>) -> impl Responder {
     let id = path.into_inner();
     let path = req.match_info().as_str();
     let auth_user = match AuthUser::get(&req) {
         Ok(user) => user,
         Err(e) => return e.get_response(path)
     };
+    let update_product = update_product.into_inner();
+    match update_product.validate() {
+        Ok(_) => (),
+        Err(e) => return ErrorsEnum::DTONotValid(e.to_string()).get_response(path)
+    }
+    let update_product_entity = update_product.to_update_product(auth_user.id);
     let mut connection = match get_connection(pool, path) {
         Ok(conn) => conn,
         Err(response) => return response
     };
 
-    let result = match product_service::update_product(&mut connection, &auth_user, new_product.into_inner(), id).await {
+    let result = match product_service::update_product(
+        &mut connection,
+        &auth_user,
+        update_product_entity,
+        update_product.currency.as_str(),
+        id
+    ).await {
         Ok(product) => product,
         Err(e) => return e.get_response(path)
     };

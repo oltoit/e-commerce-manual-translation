@@ -1,10 +1,12 @@
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
+use validator::Validate;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::service::category_service;
 use crate::service::resource_mapper::category_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
+use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_categories);
@@ -66,6 +68,13 @@ async fn get_category(path: web::Path<i64>, pool: web::Data<DbPool>, req: HttpRe
 #[post("/categories")]
 async fn create_category(req: HttpRequest, pool: web::Data<DbPool>, new_category: web::Json<CreateCategoryDto>) -> impl Responder {
     let path = req.match_info().as_str();
+    let new_category = new_category.into_inner();
+    match new_category.validate() {
+        Ok(_) => (),
+        Err(e) => return ErrorsEnum::DTONotValid(e.to_string()).get_response(path)
+    }
+    let new_category = new_category.to_new_category();
+
     let auth_user = match AuthUser::get(&req) {
         Ok(user) => user,
         Err(e) => return e.get_response(path)
@@ -75,7 +84,7 @@ async fn create_category(req: HttpRequest, pool: web::Data<DbPool>, new_category
         Err(response) => return response
     };
 
-    let result = match category_service::create_category(&mut connection, &auth_user, new_category.into_inner()) {
+    let result = match category_service::create_category(&mut connection, &auth_user, new_category) {
         Ok(category) => category,
         Err(e) => return e.get_response(path)
     };
@@ -88,21 +97,27 @@ async fn create_category(req: HttpRequest, pool: web::Data<DbPool>, new_category
 }
 
 #[put("/categories/{id}")]
-async fn update_category(req: HttpRequest, path: web::Path<i64>, pool: web::Data<DbPool>, new_category: web::Json<UpdateCategoryDto>) -> impl Responder {
+async fn update_category(req: HttpRequest, path: web::Path<i64>, pool: web::Data<DbPool>, update_category: web::Json<UpdateCategoryDto>) -> impl Responder {
     let id = path.into_inner();
     let path = req.match_info().as_str();
+    let update_category = update_category.into_inner();
+    match update_category.validate() {
+        Ok(_) => (),
+        Err(e) => return ErrorsEnum::DTONotValid(e.to_string()).get_response(path)
+    }
+    let update_category = update_category.to_update_category();
+
     let auth_user = match AuthUser::get(&req) {
         Ok(user) => user,
         Err(e) => return e.get_response(path)
     };
-    let new_category = new_category.into_inner();
     let mut connection = match get_connection(pool, path) {
         Ok(conn) => conn,
         Err(response) => return response
     };
 
 
-    let result = match category_service::update_category(&mut connection, &auth_user, id, new_category) {
+    let result = match category_service::update_category(&mut connection, &auth_user, id, update_category) {
         Ok(category) => category,
         Err(e) => return e.get_response(path)
     };

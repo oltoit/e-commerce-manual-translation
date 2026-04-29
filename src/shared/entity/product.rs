@@ -1,11 +1,9 @@
 use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::query_dsl::methods::ThenOrderDsl;
-use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
 use crate::shared::entity::user::User;
 use crate::shared::errors::error_enum::ErrorsEnum;
 use crate::schema::app_product::BoxedQuery;
-use crate::shared::auth::auth_user::AuthUser;
 
 #[derive(Queryable, QueryableByName, Selectable, Identifiable, Associations, Clone)]
 #[diesel(table_name = crate::schema::app_product)]
@@ -39,8 +37,8 @@ pub struct NewProduct<'a> {
 }
 
 impl<'a> NewProduct<'a> {
-    pub fn from_dto(dto: &'a CreateProductDto, auth_user: &AuthUser) -> Self {
-        NewProduct {id: None, name: dto.name.as_str(), price: dto.price, userid: auth_user.id}
+    pub fn new(name: &'a str, price: f64, userid: i64) -> Self {
+        NewProduct {id: None, name, price, userid}
     }
     pub fn set_id(&mut self, new_id: i64) {
         self.id = Some(new_id);
@@ -56,8 +54,8 @@ pub struct UpdateProduct<'a> {
     pub userid: i64,
 }
 impl<'a> UpdateProduct<'a> {
-    pub fn from_dto(dto: &'a UpdateProductDto, auth_user: &AuthUser) -> Self {
-        UpdateProduct {name: dto.name.as_str(), price: dto.price, userid: auth_user.id}
+    pub fn new(name: &'a str, price: f64, userid: i64) -> Self {
+        Self { name, price, userid }
     }
 }
 

@@ -1,6 +1,5 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 
 #[derive(Queryable, QueryableByName, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::app_category)]
@@ -34,9 +33,6 @@ impl<'a> NewCategory<'a> {
     pub fn set_id(&mut self, new_id: i64) {
         self.id = Some(new_id);
     }
-    pub fn from(create_category: &'a CreateCategoryDto) -> Self {
-        NewCategory {id: None, name: &create_category.name, parentid: None}
-    }
 }
 
 #[derive(AsChangeset)]
@@ -49,10 +45,9 @@ pub struct UpdateCategory<'a> {
 }
 
 impl<'a> UpdateCategory<'a> {
-    pub fn from(update_category: &'a UpdateCategoryDto) -> Self {
-        UpdateCategory {name: &update_category.name, parentid: None}
+    pub fn new(name: &'a str, parentid: Option<i64>) -> Self {
+        UpdateCategory {name, parentid}
     }
-
     pub fn from_category(category: &'a Category) -> Self {
         UpdateCategory {name: &category.name, parentid: category.parentid}
     }
