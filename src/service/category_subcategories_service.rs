@@ -1,8 +1,8 @@
 use diesel::{Connection, PgConnection};
-use crate::dao::category_repository;
-use crate::entity::category::{Category, UpdateCategory};
-use crate::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, SUBCATEGORY_UPDATE_ERROR_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::outbound::dao::category_repository;
+use crate::shared::auth::auth_user::AuthUser;
+use crate::shared::entity::category::{Category, UpdateCategory};
+use crate::shared::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, SUBCATEGORY_UPDATE_ERROR_MSG};
 
 pub fn get_subcategories_for_category(connection: &mut PgConnection, auth_user: &AuthUser, id: i64) -> Result<Vec<Category>, ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }

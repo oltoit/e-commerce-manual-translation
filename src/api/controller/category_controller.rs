@@ -3,8 +3,8 @@ use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
-use crate::security::auth_context_holder::AuthUser;
 use crate::service::category_service;
+use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_categories);

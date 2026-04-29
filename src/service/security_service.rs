@@ -1,10 +1,10 @@
 use diesel::PgConnection;
 use validator::Validate;
 use crate::api::dto::auth_dto::LoginRequest;
-use crate::dao::user_repository;
-use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
-use crate::security::jwt_handler::generate_token;
-use crate::security::role::Role;
+use crate::outbound::dao::user_repository;
+use crate::shared::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
+use crate::shared::auth::jwt_handler::generate_token;
+use crate::shared::auth::role::Role;
 
 pub fn authenticate(connection: &mut PgConnection, login_request: LoginRequest) -> Result<String, ErrorsEnum> {
     if login_request.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }

@@ -1,6 +1,6 @@
 use std::error::Error;
 use once_cell::sync::OnceCell;
-use crate::errors::error_enum::ErrorsEnum;
+use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub struct EnvLoader {
     url: String,

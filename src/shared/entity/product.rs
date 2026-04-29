@@ -2,10 +2,10 @@ use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::query_dsl::methods::ThenOrderDsl;
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
-use crate::entity::user::User;
-use crate::errors::error_enum::ErrorsEnum;
+use crate::shared::entity::user::User;
+use crate::shared::errors::error_enum::ErrorsEnum;
 use crate::schema::app_product::BoxedQuery;
-use crate::security::auth_context_holder::AuthUser;
+use crate::shared::auth::auth_user::AuthUser;
 
 #[derive(Queryable, QueryableByName, Selectable, Identifiable, Associations, Clone)]
 #[diesel(table_name = crate::schema::app_product)]

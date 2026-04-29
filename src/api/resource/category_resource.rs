@@ -2,11 +2,11 @@ use diesel::PgConnection;
 use serde::Serialize;
 use crate::api::controller::pagination::Pagination;
 use crate::api::resource::relation::{HalLink, Relation};
-use crate::config::env_loader::get_loader;
-use crate::entity::category::Category;
-use crate::errors::error_enum::ErrorsEnum;
-use crate::security::auth_context_holder::AuthUser;
+use crate::shared::env_loader::get_loader;
+use crate::shared::entity::category::Category;
+use crate::shared::errors::error_enum::ErrorsEnum;
 use crate::service::category_products_service::get_products_for_category;
+use crate::shared::auth::auth_user::AuthUser;
 
 #[derive(Serialize)]
 pub struct CategoryResource<'a> {

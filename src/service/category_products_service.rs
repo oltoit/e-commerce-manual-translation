@@ -1,11 +1,11 @@
 use diesel::{Connection, PgConnection};
 use crate::api::controller::pagination::Pagination;
-use crate::dao::{category_repository, product_category_repository, product_repository, user_repository};
-use crate::entity::product::ProductWithUser;
-use crate::entity::product_category_relation::ProductCategoryRelation;
-use crate::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, PRODUCT_NOT_FOUND_MSG, USER_NOT_FOUND_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::outbound::dao::{category_repository, product_category_repository, product_repository, user_repository};
+use crate::shared::entity::product::ProductWithUser;
+use crate::shared::entity::product_category_relation::ProductCategoryRelation;
+use crate::shared::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, PRODUCT_NOT_FOUND_MSG, USER_NOT_FOUND_MSG};
 use crate::service::auth_helper::can_mutate_product;
+use crate::shared::auth::auth_user::AuthUser;
 
 pub fn get_products_for_category(connection: &mut PgConnection, auth_user: &AuthUser, pagination: &Pagination, category_id: i64) -> Result<(Vec<ProductWithUser>, i64), ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }

@@ -1,40 +1,12 @@
 use std::future::{ready, Ready};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::Method;
-use actix_web::{HttpMessage, HttpRequest, HttpResponse};
+use actix_web::{HttpMessage, HttpResponse};
 use actix_web::error::InternalError;
 use futures_util::future::LocalBoxFuture;
-use crate::errors::error_enum::ErrorsEnum;
-use crate::errors::error_response_body::ErrorResponseBody;
-use crate::security::jwt_handler::{parse_token, TokenClaims};
-use crate::security::role::Role;
-
-#[derive(Clone)]
-pub struct AuthUser {
-    pub id: i64,
-    pub role: Role
-}
-
-impl AuthUser {
-    pub fn get(req: &HttpRequest) -> Result<Self, ErrorsEnum> {
-        let extensions = req.extensions();
-        match extensions.get::<AuthUser>() {
-            Some(user) => Ok(user.clone()),
-            None => Err(ErrorsEnum::Forbidden)
-        }
-    }
-}
-
-impl AuthUser {
-    pub fn new(id: i64, role: Role) -> Self {
-        AuthUser { id, role }
-    }
-    pub fn from(claims: TokenClaims) -> Self {
-        AuthUser { id: claims.get_id(), role: claims.get_role().clone() }
-    }
-    pub fn get_id(&self) -> i64 { self.id }
-    pub fn get_role(&self) -> Role { self.role }
-}
+use crate::shared::errors::error_response_body::ErrorResponseBody;
+use crate::shared::auth::jwt_handler::parse_token;
+use crate::shared::auth::auth_user::AuthUser;
 
 pub struct AuthContextHolder;
 impl<S, B> Transform<S, ServiceRequest> for AuthContextHolder where

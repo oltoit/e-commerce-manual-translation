@@ -3,9 +3,9 @@ use diesel::{sql_query, PgConnection, QueryDsl, QueryResult, RunQueryDsl, Select
 use diesel::result::Error;
 use diesel::sql_types::BigInt;
 use crate::api::controller::pagination::Pagination;
-use crate::entity::product::{product_sorts_to_sql_string, Product, ProductSort, ProductWithUser};
-use crate::entity::product_category_relation::ProductCategoryRelation;
-use crate::entity::user::User;
+use crate::shared::entity::product::{product_sorts_to_sql_string, Product, ProductSort, ProductWithUser};
+use crate::shared::entity::product_category_relation::ProductCategoryRelation;
+use crate::shared::entity::user::User;
 use crate::schema::app_product_category;
 use crate::schema::app_product::dsl::app_product;
 use crate::schema::app_product_category::{categoryid, productid};

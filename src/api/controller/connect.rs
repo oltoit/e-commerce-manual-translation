@@ -1,8 +1,8 @@
 use actix_web::{web, HttpResponse};
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use crate::config::env_loader::get_loader;
-use crate::errors::error_enum::ErrorsEnum;
+use crate::shared::env_loader::get_loader;
+use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 pub type DbConn = PooledConnection<ConnectionManager<PgConnection>>;

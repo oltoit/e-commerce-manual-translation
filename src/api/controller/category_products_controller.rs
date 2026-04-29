@@ -5,7 +5,7 @@ use serde_qs::actix::QsQuery;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
 use crate::api::resource::product_resource::{ProductResource, ProductsResource};
-use crate::security::auth_context_holder::AuthUser;
+use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_products_for_category);

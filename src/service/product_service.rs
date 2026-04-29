@@ -2,13 +2,13 @@ use diesel::{Connection, PgConnection};
 use validator::Validate;
 use crate::api::controller::pagination::Pagination;
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
-use crate::dao::product_repository;
-use crate::entity::product::{NewProduct, ProductWithUser, UpdateProduct};
-use crate::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::outbound::adapter::currency_conversion;
+use crate::outbound::adapter::currency_conversion::SRC_CURRENCY;
+use crate::outbound::dao::product_repository;
+use crate::shared::entity::product::{NewProduct, ProductWithUser, UpdateProduct};
+use crate::shared::errors::error_enum::{ErrorsEnum, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
 use crate::service::auth_helper::can_mutate_product_by_id;
-use crate::service::currency_conversion_service;
-use crate::service::currency_conversion_service::SRC_CURRENCY;
+use crate::shared::auth::auth_user::AuthUser;
 
 pub fn get_products_with_users(connection: &mut PgConnection, auth_user: &AuthUser, pagination: &Pagination) -> Result<(Vec<ProductWithUser>, i64), ErrorsEnum> {
     if !auth_user.role.has_user_permission() { return Err(ErrorsEnum::Forbidden); }
@@ -36,7 +36,7 @@ pub async fn create_product(connection: &mut PgConnection, auth_user: &AuthUser,
     if create_product.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
 
     if create_product.currency != SRC_CURRENCY {
-        create_product.price = currency_conversion_service::convert_currency_to_euro(
+        create_product.price = currency_conversion::convert_currency_to_euro(
             create_product.currency.as_str(),
             create_product.price
         ).await?;
@@ -57,7 +57,7 @@ pub async fn update_product(connection: &mut PgConnection, auth_user: &AuthUser,
     if update_product.validate().is_err() { return Err(ErrorsEnum::DTONotValid(DTO_NOT_VALID_ERROR_MSG.to_string())); }
 
     if update_product.currency != SRC_CURRENCY {
-        update_product.price = currency_conversion_service::convert_currency_to_euro(
+        update_product.price = currency_conversion::convert_currency_to_euro(
             update_product.currency.as_str(),
             update_product.price
         ).await?;

@@ -3,9 +3,9 @@ use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use crate::config::env_loader::get_loader;
-use crate::errors::error_enum::{ErrorsEnum, TOKEN_GENERATION_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
-use crate::security::role::Role;
+use crate::shared::env_loader::get_loader;
+use crate::shared::errors::error_enum::{ErrorsEnum, TOKEN_GENERATION_ERROR_MSG, TOKEN_PARSING_ERROR_MSG};
+use crate::shared::auth::role::Role;
 
 const TOKEN_PREFIX: &'static str = "Bearer";
 const TOKEN_EXPIRATION: u32 = 3_600_00;

@@ -4,11 +4,11 @@ use serde::Serialize;
 use crate::api::controller::pagination::Pagination;
 use crate::api::resource::category_resource::CategoryResourceHal;
 use crate::api::resource::relation::{HalLink, Relation};
-use crate::config::env_loader::get_loader;
-use crate::entity::product::{Product, ProductWithUser};
-use crate::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::shared::env_loader::get_loader;
+use crate::shared::entity::product::{Product, ProductWithUser};
+use crate::shared::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
 use crate::service::category_service;
+use crate::shared::auth::auth_user::AuthUser;
 
 #[derive(Serialize)]
 pub struct ProductsResource {

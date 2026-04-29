@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use reqwest::Client;
 use serde::Deserialize;
-use crate::config::env_loader::get_loader;
-use crate::errors::error_enum::ErrorsEnum;
+use crate::shared::env_loader::get_loader;
+use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub const SRC_CURRENCY: &str = "EUR";
 

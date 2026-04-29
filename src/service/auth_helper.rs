@@ -1,8 +1,8 @@
 use diesel::PgConnection;
-use crate::dao::product_repository;
-use crate::entity::product::Product;
-use crate::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::outbound::dao::product_repository;
+use crate::shared::auth::auth_user::AuthUser;
+use crate::shared::entity::product::Product;
+use crate::shared::errors::error_enum::{ErrorsEnum, PRODUCT_NOT_FOUND_MSG};
 
 pub fn can_mutate_product_by_id(connection: &mut PgConnection, auth_user: &AuthUser, product_id: i64) -> Result<bool, ErrorsEnum> {
     let is_admin = auth_user.role.has_admin_permission();

@@ -5,9 +5,9 @@ use env_logger::Env;
 use log::warn;
 use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
 use e_commerce_manual_translation::api::controller::connect::create_pool;
-use e_commerce_manual_translation::config::env_loader::{get_loader, set_loader};
-use e_commerce_manual_translation::errors::error_enum::ErrorsEnum;
-use e_commerce_manual_translation::security::auth_context_holder::AuthContextHolder;
+use e_commerce_manual_translation::shared::env_loader::{get_loader, set_loader};
+use e_commerce_manual_translation::shared::errors::error_enum::ErrorsEnum;
+use e_commerce_manual_translation::shared::auth::auth_context_holder::AuthContextHolder;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

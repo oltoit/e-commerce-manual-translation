@@ -1,6 +1,6 @@
 use diesel::{ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
-use crate::dao::sequence_repository::get_next_val;
-use crate::entity::category::{Category, NewCategory, UpdateCategory};
+use crate::outbound::dao::sequence_repository::get_next_val;
+use crate::shared::entity::category::{Category, NewCategory, UpdateCategory};
 use crate::schema::app_category;
 use crate::schema::app_category::parentid;
 

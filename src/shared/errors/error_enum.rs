@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use actix_web::HttpResponse;
 use log::{error, warn};
-use crate::errors::error_response_body::ErrorResponseBody;
+use crate::shared::errors::error_response_body::ErrorResponseBody;
 
 pub enum ErrorsEnum {
     WrongCredentials,

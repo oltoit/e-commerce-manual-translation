@@ -1,10 +1,10 @@
 use diesel::{Connection, PgConnection};
 use validator::Validate;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
-use crate::dao::{category_repository, product_repository};
-use crate::entity::category::{Category, NewCategory, UpdateCategory};
-use crate::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
-use crate::security::auth_context_holder::AuthUser;
+use crate::outbound::dao::{category_repository, product_repository};
+use crate::shared::auth::auth_user::AuthUser;
+use crate::shared::entity::category::{Category, NewCategory, UpdateCategory};
+use crate::shared::errors::error_enum::{ErrorsEnum, CATEGORY_NOT_FOUND_MSG, DTO_NOT_VALID_ERROR_MSG, PRODUCT_NOT_FOUND_MSG};
 
 
 pub fn get_categories(connection: &mut PgConnection, auth_user: &AuthUser) -> Result<Vec<Category>, ErrorsEnum> {
