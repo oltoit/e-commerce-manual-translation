@@ -1,8 +1,8 @@
 use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::{get_connection, DbPool};
-use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
 use crate::service::category_subcategories_service;
+use crate::service::resource_mapper::category_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -29,7 +29,7 @@ async fn get_subcategories(path: web::Path<i64>, pool: web::Data<DbPool>, req: H
         Err(e) => return e.get_response(path)
     };
 
-    let resources = match CategoryResource::map_from_entities(&mut connection, &auth_user, &result) {
+    let resources = match category_resource_mapper::map_entities_to_category_resources(&mut connection, &auth_user, &result) {
         Ok(resources) => resources,
         Err(e) => return e.get_response(path)
     };
@@ -54,7 +54,7 @@ async fn create_subcategory(path: web::Path<(i64, i64)>, pool: web::Data<DbPool>
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match CategoryResourceHal::from_entity(&mut connection, &auth_user, &result) {
+    let resource = match category_resource_mapper::map_entity_to_category_resource_hal(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };

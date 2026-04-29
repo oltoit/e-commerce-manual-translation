@@ -4,7 +4,7 @@ use actix_web::web::ServiceConfig;
 use serde_qs::actix::QsQuery;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
-use crate::api::resource::product_resource::{ProductResource, ProductsResource};
+use crate::service::resource_mapper::product_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -32,7 +32,7 @@ async fn get_products_for_category(pagination: Option<QsQuery<Pagination>>, path
         Err(e) => return e.get_response(path)
     };
 
-    let resources = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination,  &req, total_elements) {
+    let resources = match product_resource_mapper::map_entity_to_products_resource(&mut connection, &auth_user, &result, &pagination,  &req, total_elements) {
         Ok(resources) => resources,
         Err(e) => return e.get_response(path)
     };
@@ -57,7 +57,7 @@ async fn add_product_to_category(path: web::Path<(i64, i64)>, pool: web::Data<Db
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
+    let resource = match product_resource_mapper::map_entity_to_product_resource(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };

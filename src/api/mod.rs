@@ -1,3 +1,3 @@
 pub mod controller;
 pub mod dto;
-mod resource;
+pub mod resource;

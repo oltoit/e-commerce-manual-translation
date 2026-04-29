@@ -2,8 +2,8 @@ use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responde
 use actix_web::web::ServiceConfig;
 use crate::api::controller::connect::{get_connection, DbPool};
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
-use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
 use crate::service::category_service;
+use crate::service::resource_mapper::category_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -31,7 +31,7 @@ async fn get_categories(req: HttpRequest, pool: web::Data<DbPool>) -> impl Respo
         Err(e) => return e.get_response(path)
     };
 
-    let resources = match CategoryResource::map_from_entities(&mut connection, &auth_user, &result) {
+    let resources = match category_resource_mapper::map_entities_to_category_resources(&mut connection, &auth_user, &result) {
         Ok(resources) => resources,
         Err(e) => return e.get_response(path)
     };
@@ -56,7 +56,7 @@ async fn get_category(path: web::Path<i64>, pool: web::Data<DbPool>, req: HttpRe
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match CategoryResourceHal::from_entity(&mut connection, &auth_user, &result) {
+    let resource = match category_resource_mapper::map_entity_to_category_resource_hal(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };
@@ -80,7 +80,7 @@ async fn create_category(req: HttpRequest, pool: web::Data<DbPool>, new_category
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match CategoryResourceHal::from_entity(&mut connection, &auth_user, &result) {
+    let resource = match category_resource_mapper::map_entity_to_category_resource_hal(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };
@@ -107,7 +107,7 @@ async fn update_category(req: HttpRequest, path: web::Path<i64>, pool: web::Data
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match CategoryResourceHal::from_entity(&mut connection, &auth_user, &result) {
+    let resource = match category_resource_mapper::map_entity_to_category_resource_hal(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };

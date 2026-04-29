@@ -3,9 +3,9 @@ use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responde
 use actix_web::web::ServiceConfig;
 use crate::api::controller::pagination::{get_optional_pagination, Pagination};
 use crate::api::dto::product_dto::{CreateProductDto, UpdateProductDto};
-use crate::api::resource::product_resource::{ProductResource, ProductsResource};
 use serde_qs::actix::QsQuery;
 use crate::api::controller::connect::{get_connection, DbPool};
+use crate::service::resource_mapper::product_resource_mapper;
 use crate::shared::auth::auth_user::AuthUser;
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -34,7 +34,7 @@ async fn get_products(pagination: Option<QsQuery<Pagination>>, pool: web::Data<D
         Err(e) => return e.get_response(path),
     };
 
-    let resource = match ProductsResource::new(&mut connection, &auth_user, &result, &pagination, &req, total_elements) {
+    let resource = match product_resource_mapper::map_entity_to_products_resource(&mut connection, &auth_user, &result, &pagination, &req, total_elements) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path),
     };
@@ -59,7 +59,7 @@ async fn get_product(path: web::Path<i64>, pool: web::Data<DbPool>, req: HttpReq
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
+    let resource = match product_resource_mapper::map_entity_to_product_resource(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };
@@ -83,7 +83,7 @@ async fn create_product(req: HttpRequest, pool: web::Data<DbPool>, new_category:
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
+    let resource = match product_resource_mapper::map_entity_to_product_resource(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };
@@ -108,7 +108,7 @@ async fn update_product(req: HttpRequest, path: web::Path<i64>, pool: web::Data<
         Err(e) => return e.get_response(path)
     };
 
-    let resource = match ProductResource::from_product(&mut connection, &auth_user, &result) {
+    let resource = match product_resource_mapper::map_entity_to_product_resource(&mut connection, &auth_user, &result) {
         Ok(resource) => resource,
         Err(e) => return e.get_response(path)
     };
