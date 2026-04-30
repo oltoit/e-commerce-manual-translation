@@ -1,16 +1,17 @@
-use actix_web::{web, HttpResponse};
+use actix_web::web;
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use crate::shared::env_loader::get_loader;
+use crate::api::error::ServiceError;
 use crate::shared::errors::error_enum::ErrorsEnum;
 
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 pub type DbConn = PooledConnection<ConnectionManager<PgConnection>>;
 
-pub fn get_connection(pool: web::Data<DbPool>, path: &str) -> Result<DbConn, HttpResponse> {
+pub fn get_connection(pool: web::Data<DbPool>, path: &str) -> Result<DbConn, ServiceError> {
     match pool.get() {
         Ok(conn) => Ok(conn),
-        Err(_) => Err(ErrorsEnum::DatabaseError("Could not get connection from pool".to_string()).get_response(path))
+        Err(_) => Err(ServiceError::new(path.to_string(), ErrorsEnum::DatabaseError("Could not get connection from pool".to_string())))
     }
 }
 

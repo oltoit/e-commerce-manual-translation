@@ -3,6 +3,7 @@ use actix_web::HttpResponse;
 use log::{error, warn};
 use crate::shared::errors::error_response_body::ErrorResponseBody;
 
+#[derive(Debug)]
 pub enum ErrorsEnum {
     WrongCredentials,
     TokenError(String),

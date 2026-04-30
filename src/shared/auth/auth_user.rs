@@ -1,5 +1,3 @@
-use actix_web::{HttpMessage, HttpRequest};
-use crate::shared::errors::error_enum::ErrorsEnum;
 use crate::shared::auth::jwt_handler::TokenClaims;
 use crate::shared::auth::role::Role;
 
@@ -7,16 +5,6 @@ use crate::shared::auth::role::Role;
 pub struct AuthUser {
     pub id: i64,
     pub role: Role
-}
-
-impl AuthUser {
-    pub fn get(req: &HttpRequest) -> Result<Self, ErrorsEnum> {
-        let extensions = req.extensions();
-        match extensions.get::<AuthUser>() {
-            Some(user) => Ok(user.clone()),
-            None => Err(ErrorsEnum::Forbidden)
-        }
-    }
 }
 
 impl AuthUser {
