@@ -1,5 +1,5 @@
 use diesel::{Connection, PgConnection};
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::outbound::adapter::currency_conversion;
 use crate::outbound::adapter::currency_conversion::SRC_CURRENCY;
 use crate::outbound::dao::product_repository;

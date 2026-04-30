@@ -1,7 +1,7 @@
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
-use crate::api::controller::connect::{get_connection, DbPool};
-use crate::api::controller::helper::get_auth_user_from_request;
+use crate::api::controller::connection_helper::{get_connection, DbPool};
+use crate::api::controller::request_helper::get_auth_user_from_request;
 use crate::api::dto::category_dto::{CreateCategoryDto, UpdateCategoryDto};
 use crate::api::dto::validation_helper::validate_dto;
 use crate::service::category_service;

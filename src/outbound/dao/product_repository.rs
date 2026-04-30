@@ -1,7 +1,7 @@
 use diesel::{PgConnection, QueryResult, RunQueryDsl, QueryDsl};
 use diesel::prelude::*;
 use diesel::query_dsl::methods::OffsetDsl;
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::outbound::dao::sequence_repository::get_next_val;
 use crate::shared::entity::category::Category;
 use crate::shared::entity::user::User;

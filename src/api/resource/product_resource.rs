@@ -1,6 +1,6 @@
 use actix_web::HttpRequest;
 use serde::Serialize;
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::api::resource::category_resource::CategoryResourceHal;
 use crate::api::resource::relation::{HalLink, Relation};
 use crate::shared::env_loader::get_loader;

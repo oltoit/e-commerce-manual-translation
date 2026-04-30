@@ -1,8 +1,8 @@
 pub mod category_controller;
 pub mod authentication_controller;
-pub mod connect;
+pub mod connection_helper;
 pub mod category_subcategories_controller;
 pub mod product_controller;
-pub mod pagination;
+pub mod pagination_helper;
 pub mod category_products_controller;
-mod helper;
+mod request_helper;

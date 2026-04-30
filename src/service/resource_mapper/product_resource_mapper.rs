@@ -1,6 +1,6 @@
 use actix_web::HttpRequest;
 use diesel::PgConnection;
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::api::resource::category_resource::CategoryResourceHal;
 use crate::api::resource::product_resource::{ProductHalLinks, ProductResource, ProductResourceList, ProductsHalLinks, ProductsResource};
 use crate::service::category_service;

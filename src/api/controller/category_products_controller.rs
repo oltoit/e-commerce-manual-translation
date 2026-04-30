@@ -2,9 +2,9 @@ use crate::service::category_products_service;
 use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder};
 use actix_web::web::ServiceConfig;
 use serde_qs::actix::QsQuery;
-use crate::api::controller::connect::{get_connection, DbPool};
-use crate::api::controller::helper::get_auth_user_from_request;
-use crate::api::controller::pagination::{get_optional_pagination, Pagination};
+use crate::api::controller::connection_helper::{get_connection, DbPool};
+use crate::api::controller::request_helper::get_auth_user_from_request;
+use crate::api::controller::pagination_helper::{get_optional_pagination, Pagination};
 use crate::service::resource_mapper::product_resource_mapper;
 use crate::api::error::ServiceError;
 

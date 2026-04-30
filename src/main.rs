@@ -4,7 +4,7 @@ use actix_web::http::Method;
 use env_logger::Env;
 use log::warn;
 use e_commerce_manual_translation::api::controller::{authentication_controller, category_controller, category_products_controller, category_subcategories_controller, product_controller};
-use e_commerce_manual_translation::api::controller::connect::create_pool;
+use e_commerce_manual_translation::api::controller::connection_helper::create_pool;
 use e_commerce_manual_translation::shared::env_loader::{get_loader, set_loader};
 use e_commerce_manual_translation::shared::errors::error_enum::ErrorsEnum;
 use e_commerce_manual_translation::shared::auth::auth_context_holder::AuthContextHolder;

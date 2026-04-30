@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use diesel::{sql_query, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
 use diesel::result::Error;
 use diesel::sql_types::BigInt;
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::shared::entity::product::{product_sorts_to_sql_string, Product, ProductSort, ProductWithUser};
 use crate::shared::entity::product_category_relation::ProductCategoryRelation;
 use crate::shared::entity::user::User;

@@ -1,5 +1,5 @@
 use diesel::{Connection, PgConnection};
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::outbound::dao::{category_repository, product_category_repository, product_repository, user_repository};
 use crate::shared::entity::product::ProductWithUser;
 use crate::shared::entity::product_category_relation::ProductCategoryRelation;

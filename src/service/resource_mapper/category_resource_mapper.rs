@@ -1,5 +1,5 @@
 use diesel::PgConnection;
-use crate::api::controller::pagination::Pagination;
+use crate::api::controller::pagination_helper::Pagination;
 use crate::api::resource::category_resource::{CategoryResource, CategoryResourceHal};
 use crate::api::resource::relation::{HalLink, Relation};
 use crate::service::category_products_service::get_products_for_category;
