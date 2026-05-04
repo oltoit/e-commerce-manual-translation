@@ -10,6 +10,8 @@ pub struct EnvLoader {
     fixer_api_key: String,
     token_secret_key: String,
     database_url: String,
+    connection_pool_max_size: u32,
+    connection_pool_min_idle: Option<u32>,
 }
 
 impl EnvLoader {
@@ -24,6 +26,11 @@ impl EnvLoader {
             fixer_api_key: std::env::var("FIXER_API_KEY")?,
             token_secret_key: std::env::var("TOKEN_SECRET_KEY")?,
             database_url: std::env::var("DATABASE_URL")?,
+            connection_pool_max_size: std::env::var("CONNECTION_POOL_MAX_SIZE")?.parse()?,
+            connection_pool_min_idle: match std::env::var("CONNECTION_POOL_MIN_IDLE") {
+                Ok(val) => Some(val.parse()?),
+                Err(_) => None
+            },
         })
     }
 
@@ -34,6 +41,8 @@ impl EnvLoader {
     pub fn get_fixer_api_key(&self) -> &str { &self.fixer_api_key }
     pub fn get_token_secret_key(&self) -> &str { &self.token_secret_key }
     pub fn get_database_url(&self) -> &str { &self.database_url }
+    pub fn get_connection_pool_max_size(&self) -> u32 { self.connection_pool_max_size }
+    pub fn get_connection_pool_min_idle(&self) -> Option<u32> { self.connection_pool_min_idle }
 
     /// Gets the address of the server including it's port
     pub fn get_address(&self) -> String {

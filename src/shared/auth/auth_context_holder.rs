@@ -4,6 +4,7 @@ use actix_web::http::Method;
 use actix_web::{HttpMessage, HttpResponse};
 use actix_web::error::InternalError;
 use futures_util::future::LocalBoxFuture;
+use log::warn;
 use crate::shared::errors::error_response_body::ErrorResponseBody;
 use crate::shared::auth::jwt_handler::parse_token;
 use crate::shared::auth::auth_user::AuthUser;
@@ -49,15 +50,11 @@ impl<S, B> Service<ServiceRequest> for AuthMiddleware<S> where
             });
         }
 
-        let token = req.headers()
-            .get("Authorization")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|t| t.strip_prefix("Bearer "))
-            .unwrap_or("");
-
+        let token = get_token_from_headers(&req);
         let auth = match parse_token(token) {
             Ok(auth) => AuthUser::from(auth),
-            Err(_) => {
+            Err(e) => {
+                warn!("{}", e);
                 let path = req.path();
                 return Box::pin(
                     ready(
@@ -85,4 +82,16 @@ fn forbidden(path: &str) -> HttpResponse {
 
 fn no_auth_needed(req: &ServiceRequest) -> bool {
     req.method() == Method::OPTIONS
+}
+
+fn get_token_from_headers(req: &ServiceRequest) -> &str {
+    req.headers()
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|t| strip_prefix(t, "Bearer "))
+        .unwrap_or("")
+}
+
+fn strip_prefix<'a>(token: &'a str, prefix: &str) -> Option<&'a str> {
+    Some(token.trim_start_matches(prefix))
 }

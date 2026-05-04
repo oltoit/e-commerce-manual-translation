@@ -16,11 +16,13 @@ pub fn get_connection(pool: web::Data<DbPool>, path: &str) -> Result<DbConn, Ser
 }
 
 pub fn create_pool() -> Result<DbPool, ErrorsEnum> {
-    let database_url = get_loader()?.get_database_url();
+    let loader = get_loader()?;
+    let database_url = loader.get_database_url();
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 
-    // TODO: finetune this to make it work well in capacity tests (max_size, etc.)
     Pool::builder()
+        .max_size(loader.get_connection_pool_max_size())
+        .min_idle(loader.get_connection_pool_min_idle())
         .build(manager)
         .map_err(|_| ErrorsEnum::DatabaseError("Could not create pool".to_string()))
 }

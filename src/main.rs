@@ -59,7 +59,7 @@ fn default_handler(req: HttpRequest) -> impl Responder {
         if req.method() == Method::OPTIONS {
             return HttpResponse::Ok().finish();
         }
-        warn!("Method {:?} not allowed on endpoint {}", req.method(), req.path());
+        warn!("Method {} not allowed on endpoint {}", req.method(), req.path());
         HttpResponse::MethodNotAllowed().finish()
     } else {
         warn!("Not Handler found for endpoint {}", req.path());
