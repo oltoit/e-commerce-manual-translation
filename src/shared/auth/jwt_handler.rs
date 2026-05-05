@@ -8,7 +8,7 @@ use crate::shared::errors::error_enum::{ErrorsEnum, TOKEN_GENERATION_ERROR_MSG, 
 use crate::shared::auth::role::Role;
 
 const TOKEN_PREFIX: &'static str = "Bearer";
-const TOKEN_EXPIRATION: u32 = 3_600_00;
+const TOKEN_EXPIRATION: u32 = 3_600_000;
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
