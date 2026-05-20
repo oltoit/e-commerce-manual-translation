@@ -42,6 +42,28 @@ impl Pagination {
             None => vec![DEFAULT_SORT],
         }
     }
+
+    pub fn as_str(&self) -> String {
+        let mut query = String::new();
+        if let Some(page) = self.page {
+            query.push_str(&format!("page={}&", page));
+        } else {
+            query.push_str(&format!("page={}&", DEFAULT_PAGE));
+        }
+
+        if let Some(size) = self.size {
+            query.push_str(&format!("size={}&", size));
+        } else {
+            query.push_str(&format!("size={}&", DEFAULT_PAGE_SIZE));
+        }
+
+        if let Some(sorts) = &self.sort {
+            query.push_str(&format!("sort={}&", sorts.join(",")));
+        }
+
+        if query.ends_with('&') { query.pop(); }
+        query
+    }
 }
 
 pub fn get_optional_pagination(pagination: Option<QsQuery<Pagination>>) -> Pagination {

@@ -30,7 +30,7 @@ pub fn map_entity_to_products_resource(
         _ => Some(ProductResourceList { product_resource_list: embedded })
     };
 
-    let links = ProductsHalLinks::new(req)?;
+    let links = ProductsHalLinks::new(req, page)?;
     let page = crate::api::resource::product_resource::Page::new(page, total_elements);
 
     Ok (ProductsResource::new(embedded, links, page))

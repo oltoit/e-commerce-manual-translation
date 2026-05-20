@@ -63,12 +63,13 @@ impl ProductHalLinks {
     }
 }
 
-fn get_paginated_self_link(req: &HttpRequest) -> Result<Relation, ErrorsEnum> {
+fn get_paginated_self_link(req: &HttpRequest, pagination: &Pagination) -> Result<Relation, ErrorsEnum> {
     let rel = "self".to_string();
     let href = String::from(format!(
-        "{}/{}",
+        "{}{}?{}",
         get_loader()?.get_base_url(),
-        req.match_info().as_str()
+        req.match_info().as_str(),
+        pagination.as_str()
     ));
     Ok(Relation { rel, href })
 }
@@ -79,8 +80,8 @@ pub struct ProductsHalLinks {
     pub self_link: HalLink,
 }
 impl ProductsHalLinks {
-    pub fn new(req: &HttpRequest) -> Result<Self, ErrorsEnum> {
-        Ok(Self { self_link: HalLink { href: get_paginated_self_link(req)?.href} })
+    pub fn new(req: &HttpRequest, pagination: &Pagination) -> Result<Self, ErrorsEnum> {
+        Ok(Self { self_link: HalLink { href: get_paginated_self_link(req, pagination)?.href} })
     }
 }
 
