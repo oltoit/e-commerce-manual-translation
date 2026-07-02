@@ -1,0 +1,15 @@
+crate
+crate::api
+crate::api::controller
+crate::api::dto
+crate::api::resource
+crate::outbound
+crate::outbound::adapter
+crate::outbound::dao
+crate::shared
+crate::shared::auth
+crate::shared::entity
+crate::shared::errors
+crate::service
+crate::service::resource_mapper
+crate::schema
