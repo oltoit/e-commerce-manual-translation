@@ -113,11 +113,17 @@ def load_ignored_modules(ignore_file: Path) -> set[str]:
 def crate_roots(src: Path) -> list[tuple[str, Path]]:
     roots = []
 
-    if (src / "lib.rs").exists():
+    has_lib = (src / "lib.rs").exists()
+    has_main = (src / "main.rs").exists()
+
+    if has_lib:
         roots.append(("crate", src / "lib.rs"))
 
-    if (src / "main.rs").exists():
-        roots.append(("bin::main", src / "main.rs"))
+        if has_main:
+            roots.append(("bin::main", src / "main.rs"))
+
+    elif has_main:
+        roots.append(("crate", src / "main.rs"))
 
     bin_dir = src / "bin"
     if bin_dir.exists():
@@ -325,7 +331,7 @@ def resolve_path(
     known: set[str],
     package_name: Optional[str],
 ) -> Optional[str]:
-    parts = normalize_path_parts(parts)
+    parts = [p for p in parts if p != ""]
     if not parts:
         return None
 
@@ -333,7 +339,7 @@ def resolve_path(
         parts[0] = "crate"
 
     if parts[0] == "crate":
-        full = parts
+        full = normalize_path_parts(parts)
 
     elif parts[0] == "super":
         base = current_mod.split("::")
@@ -348,10 +354,14 @@ def resolve_path(
         full = current_mod.split("::") + parts[1:]
 
     else:
-        full = current_mod.split("::") + parts
+        return None
 
     for i in range(len(full), 0, -1):
         cand = "::".join(full[:i])
+
+        if cand == current_mod:
+            continue
+
         if cand in known:
             return cand
 
@@ -405,6 +415,7 @@ def build_graph(project: Path) -> Graph:
             if node.type == "use_declaration":
                 for parts in parse_use_tree(data, node):
                     target = resolve_path(current_mod, parts, known, package_name)
+                    print(f"{current_mod}: {parts} -> {target}")
                     if target and target != current_mod:
                         graph.edges[current_mod].add(target)
 
@@ -418,7 +429,10 @@ def build_graph(project: Path) -> Graph:
 
 def write_csv(graph: Graph, output: Path, ignored: set[str]) -> None:
     fan_in = {m: 0 for m in graph.modules}
-    fan_out = {m: len(graph.edges.get(m, set())) for m in graph.modules}
+    fan_out = {
+        m: len({t for t in graph.edges.get(m, set()) if t not in ignored})
+        for m in graph.modules
+    }
 
     for module in ignored:
         fan_in.pop(module, None)
