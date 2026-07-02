@@ -465,7 +465,7 @@ def write_csv(graph: Graph, output: Path, ignored: set[str]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("project", help="Rust project directory")
-    ap.add_argument("-o", "--output", default="rust_module_metrics.csv")
+    ap.add_argument("-o", "--output", default="module_coupling.csv")
     args = ap.parse_args()
 
     project = Path(args.project).resolve()
